@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Message Panel", "MJSU", "0.0.1")]
+    [Info("Message Panel", "MJSU", "0.0.2")]
     [Description("Displays messages to the player")]
     internal class MessagePanel : RustPlugin
     {
@@ -110,7 +110,14 @@ namespace Oxide.Plugins
             PanelText text = panel.Text;
             if (text != null)
             {
-                text.Text = panelData.Messages.Where(m => text.Text != m).ToList().GetRandom();
+                if (panelData.Messages.Count == 1)
+                {
+                    text.Text = panelData.Messages[0];
+                }
+                else
+                {
+                    text.Text = panelData.Messages.Where(m => text.Text != m).ToList().GetRandom();
+                }
             }
 
             return JsonConvert.SerializeObject(panel);

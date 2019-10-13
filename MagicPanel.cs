@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Magic Panel", "MJSU", "0.0.1")]
+    [Info("Magic Panel", "MJSU", "0.0.2")]
     [Description("Displays information to the players on their hud.")]
     internal class MagicPanel : RustPlugin
     {
@@ -524,7 +524,10 @@ namespace Oxide.Plugins
             }
             
             Panel panel = JsonConvert.DeserializeObject<Panel>(panelData);
-            
+            if (panel.Text != null && panel.Text.Text == null)
+            {
+                panel.Text.Text = string.Empty;
+            }
             
             List<PanelUpdate> containers = CreatePanel(panel, creator, updateEnum);
             foreach (BasePlayer player in players)
@@ -568,6 +571,12 @@ namespace Oxide.Plugins
                 }
                 
                 Panel panel = JsonConvert.DeserializeObject<Panel>(panelData);
+                
+                if (panel.Text != null && panel.Text.Text == null)
+                {
+                    panel.Text.Text = string.Empty;
+                }
+                
                 foreach (PanelUpdate update in CreatePanel(panel, creator, updateEnum))
                 {
                     CuiHelper.DestroyUi(player, update.PanelName);
