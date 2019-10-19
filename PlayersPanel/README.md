@@ -16,6 +16,7 @@ Displays the current player count
   "Panel Layout": {
     "Image": {
       "Url": "https://i.imgur.com/TP01GYf.png",
+      "Enabled": true,
       "Color": "#FFFFFFFF",
       "Order": 0,
       "Width": 0.33,
@@ -30,6 +31,7 @@ Displays the current player count
       "Text": "{0}/{1}",
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
+      "Enabled": true,
       "Color": "#08C717FF",
       "Order": 1,
       "Width": 0.67,

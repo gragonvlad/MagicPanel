@@ -1,19 +1,23 @@
-﻿using Newtonsoft.Json;
+﻿using System;
+using System.ComponentModel;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Oxide.Core.Plugins;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Economics Panel", "MJSU", "0.0.3")]
-    [Description("Displays player economics data in MagicPanel")]
-    internal class EconomicsPanel : RustPlugin
+    [Info("Hostile Panel", "MJSU", "0.0.3")]
+    [Description("Displays how much longer a player is considered hostile")]
+    internal class HostilePanel : RustPlugin
     {
         #region Class Fields
-        [PluginReference] private readonly Plugin MagicPanel, Economics;
+        [PluginReference] private readonly Plugin MagicPanel;
 
         private PluginConfig _pluginConfig; //Plugin Config
-        private string _textFormat;
+        private string _panelText;
+        
+        private readonly Hash<ulong, Timer> _hostileTimer = new Hash<ulong, Timer>();
 
         private enum UpdateEnum { All = 1, Panel = 2, Image = 3, Text = 4 }
         #endregion
@@ -22,7 +26,7 @@ namespace Oxide.Plugins
         private void Init()
         {
             ConfigLoad();
-            _textFormat = _pluginConfig.Panel.Text.Text;
+            _panelText = _pluginConfig.Panel.Text.Text;
         }
 
         protected override void LoadDefaultConfig()
@@ -47,27 +51,27 @@ namespace Oxide.Plugins
                     Color = config.Panel?.Image?.Color ?? "#FFFFFFFF",
                     Order = config.Panel?.Image?.Order ?? 0,
                     Width = config.Panel?.Image?.Width ?? 0.33f,
-                    Url = config.Panel?.Image?.Url ?? "https://i.imgur.com/nbEeITS.png",
-                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.0f, 0.2f, 0.05f)
+                    Url = config.Panel?.Image?.Url ?? "https://i.imgur.com/v5sdNHg.png",
+                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.0f, 0.1f, 0.1f)
                 },
                 Text = new PanelText
                 {
                     Enabled = config.Panel?.Text?.Enabled ?? true,
-                    Color = config.Panel?.Text?.Color ?? "#85BB65FF",
+                    Color = config.Panel?.Text?.Color ?? "#08C717FF",
                     Order = config.Panel?.Text?.Order ?? 1,
                     Width = config.Panel?.Text?.Width ?? 0.67f,
                     FontSize = config.Panel?.Text?.FontSize ?? 14,
                     Padding = config.Panel?.Text?.Padding ?? new TypePadding(0.05f, 0.05f, 0.05f, 0.05f),
                     TextAnchor = config.Panel?.Text?.TextAnchor ?? TextAnchor.MiddleCenter,
-                    Text = config.Panel?.Text?.Text ?? "{0:0.00}",
+                    Text = config.Panel?.Text?.Text ?? "{0}",
                 }
             };
             config.PanelSettings = new PanelRegistration
             {
-                BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#FFF2DF08",
-                Dock = config.PanelSettings?.Dock ?? "leftmiddle",
-                Order = config.PanelSettings?.Order ?? 0,
-                Width = config.PanelSettings?.Width ?? 0.07f
+                BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#fff2df08",
+                Dock = config.PanelSettings?.Dock ?? "right",
+                Order = config.PanelSettings?.Order ?? 14,
+                Width = config.PanelSettings?.Width ?? 0.08f
             };
             return config;
         }
@@ -86,14 +90,56 @@ namespace Oxide.Plugins
             }
         
             MagicPanel?.Call("RegisterPlayerPanel", this, Name, JsonConvert.SerializeObject(_pluginConfig.PanelSettings), nameof(GetPanel));
+            timer.In(1f, () =>
+            {
+                foreach (BasePlayer player in BasePlayer.activePlayerList)
+                {
+                    SetupHostile(player);
+                }
+            });
+        }
+
+        private void OnPlayerInit(BasePlayer player)
+        {
+           HidePanel(player);
         }
         #endregion
 
-        #region Economics Hook
-        private void OnBalanceChanged(ulong playerId, double amount)
+        #region uMod Hooks
+        private void OnEntityMarkHostile(BasePlayer player)
         {
-            BasePlayer player = BasePlayer.FindByID(playerId);
-            MagicPanel?.Call("UpdatePanel", player, Name, (int)UpdateEnum.Text);
+            if (player == null || player.IsNpc || !player.IsAdmin)
+            {
+                return;
+            }
+            
+            NextTick(() =>
+            {
+               SetupHostile(player);
+            });
+        }
+
+        private void SetupHostile(BasePlayer player)
+        {
+            if (player.unHostileTime < Time.realtimeSinceStartup)
+            {
+                HidePanel(player);
+                return;
+            }
+
+            ShowPanel(player);
+            _hostileTimer[player.userID]?.Destroy();
+            _hostileTimer[player.userID] = timer.Every(1f, () =>
+            {
+                if (player.unHostileTime < Time.realtimeSinceStartup)
+                {
+                    _hostileTimer[player.userID]?.Destroy();
+                    HidePanel(player);
+                    return;
+                }
+                
+                UpdatePanel(player);
+            });
         }
         #endregion
 
@@ -105,16 +151,66 @@ namespace Oxide.Plugins
             PanelText text = panel.Text;
             if (text != null)
             {
-                text.Text = string.Format(_textFormat, Economics?.Call<double>("Balance", player.userID) ?? 0);
+                string format;
+                if (player.unHostileTime > Time.realtimeSinceStartup)
+                {
+                    TimeSpan remainingTime = TimeSpan.FromSeconds(player.unHostileTime - Time.realtimeSinceStartup);
+                    if (remainingTime.TotalMinutes > 0)
+                    {
+                        format = $"{remainingTime.Minutes}M:{remainingTime.Seconds:00}S";
+                    }
+                    else
+                    {
+                        format = $"{remainingTime.TotalSeconds}S";
+                    }
+                }
+                else
+                {
+                    format = "0s";
+                }
+
+                text.Text = string.Format(_panelText, format);
             }
 
             return JsonConvert.SerializeObject(panel);
         }
         #endregion
 
+        #region Helpers
+
+        private void HidePanel(BasePlayer player)
+        {
+            if (!_pluginConfig.ShowHide)
+            {
+                return;
+            }
+            
+            MagicPanel?.Call("HidePanel", Name, player);
+        }
+        
+        private void ShowPanel(BasePlayer player)
+        {
+            if (!_pluginConfig.ShowHide)
+            {
+                return;
+            }
+            
+            MagicPanel?.Call("ShowPanel", Name, player);
+        }
+
+        private void UpdatePanel(BasePlayer player)
+        {
+            MagicPanel?.Call("UpdatePanel", player, Name, (int)UpdateEnum.Text);
+        }
+        #endregion
+
         #region Classes
         private class PluginConfig
         {
+            [DefaultValue(false)]
+            [JsonProperty(PropertyName = "Show/Hide panel")]
+            public bool ShowHide { get; set; }
+            
             [JsonProperty(PropertyName = "Panel Settings")]
             public PanelRegistration PanelSettings { get; set; }
 

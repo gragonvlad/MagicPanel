@@ -1,19 +1,23 @@
-﻿using Newtonsoft.Json;
+﻿using System.ComponentModel;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Oxide.Core.Plugins;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Economics Panel", "MJSU", "0.0.3")]
-    [Description("Displays player economics data in MagicPanel")]
-    internal class EconomicsPanel : RustPlugin
+    [Info("Radiation Info Panel", "MJSU", "0.0.3")]
+    [Description("Displays how much radiation protection the player has verse how much they need")]
+    internal class RadiationInfoPanel : RustPlugin
     {
         #region Class Fields
-        [PluginReference] private readonly Plugin MagicPanel, Economics;
+        [PluginReference] private Plugin MagicPanel;
 
         private PluginConfig _pluginConfig; //Plugin Config
+
         private string _textFormat;
+
+        private static RadiationInfoPanel _ins;
 
         private enum UpdateEnum { All = 1, Panel = 2, Image = 3, Text = 4 }
         #endregion
@@ -21,7 +25,7 @@ namespace Oxide.Plugins
         #region Setup & Loading
         private void Init()
         {
-            ConfigLoad();
+            _ins = this;
             _textFormat = _pluginConfig.Panel.Text.Text;
         }
 
@@ -30,8 +34,9 @@ namespace Oxide.Plugins
             PrintWarning("Loading Default Config");
         }
 
-        private void ConfigLoad()
+        protected override void LoadConfig()
         {
+            base.LoadConfig();
             Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
             _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
             Config.WriteObject(_pluginConfig);
@@ -46,28 +51,28 @@ namespace Oxide.Plugins
                     Enabled = config.Panel?.Image?.Enabled ?? true,
                     Color = config.Panel?.Image?.Color ?? "#FFFFFFFF",
                     Order = config.Panel?.Image?.Order ?? 0,
-                    Width = config.Panel?.Image?.Width ?? 0.33f,
-                    Url = config.Panel?.Image?.Url ?? "https://i.imgur.com/nbEeITS.png",
-                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.0f, 0.2f, 0.05f)
+                    Width = config.Panel?.Image?.Width ?? 0.24f,
+                    Url = config.Panel?.Image?.Url ?? "https://i.imgur.com/hnNhgFj.png",
+                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.01f, 0.00f, 0.1f, 0.1f)
                 },
                 Text = new PanelText
                 {
                     Enabled = config.Panel?.Text?.Enabled ?? true,
-                    Color = config.Panel?.Text?.Color ?? "#85BB65FF",
+                    Color = config.Panel?.Text?.Color ?? "#FF6600FF",
                     Order = config.Panel?.Text?.Order ?? 1,
-                    Width = config.Panel?.Text?.Width ?? 0.67f,
+                    Width = config.Panel?.Text?.Width ?? .76f,
                     FontSize = config.Panel?.Text?.FontSize ?? 14,
-                    Padding = config.Panel?.Text?.Padding ?? new TypePadding(0.05f, 0.05f, 0.05f, 0.05f),
+                    Padding = config.Panel?.Text?.Padding ?? new TypePadding(0.01f, 0.01f, 0.05f, 0.05f),
                     TextAnchor = config.Panel?.Text?.TextAnchor ?? TextAnchor.MiddleCenter,
-                    Text = config.Panel?.Text?.Text ?? "{0:0.00}",
+                    Text = config.Panel?.Text?.Text ?? "{0:0}/{1:0}"
                 }
             };
             config.PanelSettings = new PanelRegistration
             {
                 BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#FFF2DF08",
-                Dock = config.PanelSettings?.Dock ?? "leftmiddle",
-                Order = config.PanelSettings?.Order ?? 0,
-                Width = config.PanelSettings?.Width ?? 0.07f
+                Dock = config.PanelSettings?.Dock ?? "right",
+                Order = config.PanelSettings?.Order ?? 12,
+                Width = config.PanelSettings?.Width ?? 0.06f
             };
             return config;
         }
@@ -75,6 +80,10 @@ namespace Oxide.Plugins
         private void OnServerInitialized()
         {
             RegisterPanels();
+            foreach (BasePlayer player in BasePlayer.activePlayerList)
+            {
+                AddBehavior(player);
+            }
         }
 
         private void RegisterPanels()
@@ -87,17 +96,42 @@ namespace Oxide.Plugins
         
             MagicPanel?.Call("RegisterPlayerPanel", this, Name, JsonConvert.SerializeObject(_pluginConfig.PanelSettings), nameof(GetPanel));
         }
-        #endregion
 
-        #region Economics Hook
-        private void OnBalanceChanged(ulong playerId, double amount)
+        private void OnPlayerInit(BasePlayer player)
         {
-            BasePlayer player = BasePlayer.FindByID(playerId);
-            MagicPanel?.Call("UpdatePanel", player, Name, (int)UpdateEnum.Text);
+            AddBehavior(player);
+        }
+
+        private void OnPlayerDisconnected(BasePlayer player, string reason)
+        {
+            DestroyBehavior(player);
+        }
+
+        private void Unload()
+        {
+            foreach (BasePlayer player in BasePlayer.activePlayerList)
+            {
+                DestroyBehavior(player);
+            }
+            _ins = null;
         }
         #endregion
 
         #region Helper Methods
+
+        private void AddBehavior(BasePlayer player)
+        {
+            if (player.GetComponent<RadiationBehavior>() == null)
+            {
+                player.gameObject.AddComponent<RadiationBehavior>();
+            }
+        }
+
+        private void DestroyBehavior(BasePlayer player)
+        {
+            RadiationBehavior radiation = player.GetComponent<RadiationBehavior>();
+            radiation?.DoDestroy();
+        }
 
         private string GetPanel(BasePlayer player)
         {
@@ -105,7 +139,11 @@ namespace Oxide.Plugins
             PanelText text = panel.Text;
             if (text != null)
             {
-                text.Text = string.Format(_textFormat, Economics?.Call<double>("Balance", player.userID) ?? 0);
+                RadiationBehavior rad = player.GetComponent<RadiationBehavior>();
+                float radAmount = rad?.LastRadAmount ?? 0;
+                float radProtection =  rad?.LastProtectionAmount ?? 0;
+
+                text.Text = string.Format(_textFormat, radProtection, radAmount);
             }
 
             return JsonConvert.SerializeObject(panel);
@@ -113,8 +151,57 @@ namespace Oxide.Plugins
         #endregion
 
         #region Classes
+
+        private class RadiationBehavior : FacepunchBehaviour
+        {
+            private BasePlayer Player { get; set; }
+            public float LastRadAmount { get; private set; }
+            public float LastProtectionAmount { get; private set; }
+
+            private void Awake()
+            {
+                enabled = false;
+                Player = GetComponent<BasePlayer>();
+                InvokeRepeating(UpdateRadiation, _ins._pluginConfig.UpdateRate, _ins._pluginConfig.UpdateRate);
+            }
+
+            private void UpdateRadiation()
+            {
+                float radAmount = 0f;
+                if (Player.triggers != null)
+                {
+                    foreach (TriggerBase trigger in Player.triggers)
+                    {
+                        TriggerRadiation radiation = trigger as TriggerRadiation;
+                        if (radiation != null)
+                        {
+                            radAmount = Mathf.Max(radAmount, radiation.GetRadiation(Player.transform.position, 0));
+                        }
+                    }
+                }
+
+                float radProtection = Player.RadiationProtection();
+
+                if (radAmount != LastRadAmount || radProtection != LastProtectionAmount)
+                {
+                    _ins.MagicPanel?.Call("UpdatePanel", Player, _ins.Name, (int)UpdateEnum.Text);
+                    LastRadAmount = radAmount;
+                    LastProtectionAmount = radProtection;
+                }
+            }
+
+            public void DoDestroy()
+            {
+                Destroy(this);
+            }
+        }
+
         private class PluginConfig
         {
+            [DefaultValue(5f)]
+            [JsonProperty(PropertyName = "Update Rate (Seconds)")]
+            public float UpdateRate { get; set; }
+
             [JsonProperty(PropertyName = "Panel Settings")]
             public PanelRegistration PanelSettings { get; set; }
 

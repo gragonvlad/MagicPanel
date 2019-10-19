@@ -19,6 +19,7 @@ Change the color of the Heli icon when a Heli is active.
   "Panel Layout": {
     "Image": {
       "Url": "http://i.imgur.com/hTTyTTx.png",
+      "Enabled": true,
       "Color": "#FFFFFFFF",
       "Order": 0,
       "Width": 1.0,
@@ -28,8 +29,7 @@ Change the color of the Heli icon when a Heli is active.
         "Top": 0.1,
         "Bottom": 0.1
       }
-    },
-    "Text": null
+    }
   }
 }
  ```

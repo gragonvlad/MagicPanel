@@ -19,6 +19,7 @@ Change the color of the Plane Crash icon when a Plane Crash is active.
   "Panel Layout": {
     "Image": {
       "Url": "https://i.imgur.com/ipLC2ww.png",
+      "Enabled": true,
       "Color": "#FFFFFFFF",
       "Order": 0,
       "Width": 1.0,
@@ -28,8 +29,7 @@ Change the color of the Plane Crash icon when a Plane Crash is active.
         "Top": 0.05,
         "Bottom": 0.05
       }
-    },
-    "Text": null
+    }
   }
 }
  ```

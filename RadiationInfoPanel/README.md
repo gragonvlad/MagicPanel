@@ -1,43 +1,44 @@
-# Clock Panel
+# Radiation Info Panel
 
 ## About
-Displays the current in game time
+Displays the current radiation protection for the player verses how much protection the player needs
 
 ## Configuration
  
  ```json
 {
+  "Update Rate (Seconds)": 5.0,
   "Panel Settings": {
-    "Dock": "leftbottom",
-    "Width": 0.075,
-    "Order": 1,
+    "Dock": "right",
+    "Width": 0.06,
+    "Order": 12,
     "BackgroundColor": "#FFF2DF08"
   },
   "Panel Layout": {
     "Image": {
-      "Url": "https://i.imgur.com/cSykHxd.png",
+      "Url": "https://i.imgur.com/hnNhgFj.png",
       "Enabled": true,
       "Color": "#FFFFFFFF",
       "Order": 0,
-      "Width": 0.28,
+      "Width": 0.24,
       "Padding": {
-        "Left": 0.05,
+        "Left": 0.01,
         "Right": 0.0,
         "Top": 0.1,
         "Bottom": 0.1
       }
     },
     "Text": {
-      "Text": "{0:hh:mm tt}",
+      "Text": "{0:0}/{1:0}",
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
       "Enabled": true,
-      "Color": "#FF804FFF",
+      "Color": "#FF6600FF",
       "Order": 1,
-      "Width": 0.72,
+      "Width": 0.76,
       "Padding": {
-        "Left": 0.05,
-        "Right": 0.05,
+        "Left": 0.01,
+        "Right": 0.01,
         "Top": 0.05,
         "Bottom": 0.05
       }
@@ -45,6 +46,3 @@ Displays the current in game time
   }
 }
  ```
-
-### Time Format
-[Formatting the display time](https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings)

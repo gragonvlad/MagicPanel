@@ -15,11 +15,24 @@ Displays the current server fps
     "BackgroundColor": "#fff2df08"
   },
   "Panel Layout": {
-    "Image": null,
+    "Image": {
+      "Url": "",
+      "Enabled": false,
+      "Color": "#FFFFFFFF",
+      "Order": 0,
+      "Width": 0.33,
+      "Padding": {
+        "Left": 0.05,
+        "Right": 0.0,
+        "Top": 0.2,
+        "Bottom": 0.05
+      }
+    },
     "Text": {
       "Text": "(S)FPS: {0}",
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
+      "Enabled": true,
       "Color": "#33B5E6FF",
       "Order": 1,
       "Width": 1.0,

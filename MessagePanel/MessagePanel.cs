@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Message Panel", "MJSU", "0.0.2")]
+    [Info("Message Panel", "MJSU", "0.0.3")]
     [Description("Displays messages to the player")]
     internal class MessagePanel : RustPlugin
     {
@@ -16,11 +16,11 @@ namespace Oxide.Plugins
 
         private PluginConfig _pluginConfig; //Plugin Config
 
-        private enum UpdateEnum { All, Panel, Image, Text }
+        private enum UpdateEnum { All = 1, Panel = 2, Image = 3, Text = 4 }
         #endregion
 
         #region Setup & Loading
-        private void Loaded()
+        private void Init()
         {
             ConfigLoad();
         }
@@ -47,6 +47,7 @@ namespace Oxide.Plugins
                     {
                         Text = new PanelText
                         {
+                            Enabled = true,
                             Color = "#FFFFFFFF",
                             Order = 1,
                             Width = 1f,
@@ -94,6 +95,12 @@ namespace Oxide.Plugins
 
         private void RegisterPanels()
         {
+            if (MagicPanel == null)
+            {
+                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                return;
+            }
+        
             foreach (KeyValuePair<string, PanelData> panel in _pluginConfig.Panels)
             {
                 MagicPanel?.Call("RegisterGlobalPanel", this, panel.Key, JsonConvert.SerializeObject(panel.Value.PanelSettings), nameof(GetPanel));
@@ -110,6 +117,10 @@ namespace Oxide.Plugins
             PanelText text = panel.Text;
             if (text != null)
             {
+                if (panelData.Messages.Count == 0)
+                {
+                    text.Text = string.Empty;
+                }
                 if (panelData.Messages.Count == 1)
                 {
                     text.Text = panelData.Messages[0];
@@ -155,21 +166,16 @@ namespace Oxide.Plugins
 
         private class Panel
         {
-            public PanelImage Image { get; set; }
             public PanelText Text { get; set; }
         }
 
         private abstract class PanelType
         {
+            public bool Enabled { get; set; }
             public string Color { get; set; }
             public int Order { get; set; }
             public float Width { get; set; }
-            public TypePadding Padding { get; set; } = new TypePadding();
-        }
-
-        private class PanelImage : PanelType
-        {
-            public string Url { get; set; }
+            public TypePadding Padding { get; set; }
         }
 
         private class PanelText : PanelType
@@ -187,14 +193,6 @@ namespace Oxide.Plugins
             public float Right { get; set; }
             public float Top { get; set; }
             public float Bottom { get; set; }
-
-            public TypePadding()
-            {
-                Left = 0;
-                Right = 0;
-                Top = 0;
-                Bottom = 0;
-            }
 
             public TypePadding(float left, float right, float top, float bottom)
             {

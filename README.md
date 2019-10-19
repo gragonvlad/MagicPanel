@@ -21,10 +21,15 @@ Panels dynamically position themselves within a dock based on the dock assigned 
         "Height": 0.035
       },
       "Enabled": true,
-      "Background Color": "#FF000000",
+      "Background Color": "#00000000",
       "Panel Alignment (Left, Center, Right)": "Left",
       "Panel Padding": 0.004,
-      "Dock Padding": 0.001
+      "Dock Padding": {
+        "Left": 0.001,
+        "Right": 0.001,
+        "Top": 0.0,
+        "Bottom": 0.0
+      }
     },
     "leftmiddle": {
       "Position": {
@@ -33,10 +38,15 @@ Panels dynamically position themselves within a dock based on the dock assigned 
         "Height": 0.035
       },
       "Enabled": true,
-      "Background Color": "#00FF0000",
+      "Background Color": "#00000000",
       "Panel Alignment (Left, Center, Right)": "Left",
       "Panel Padding": 0.004,
-      "Dock Padding": 0.001
+      "Dock Padding": {
+        "Left": 0.001,
+        "Right": 0.001,
+        "Top": 0.0,
+        "Bottom": 0.0
+      }
     },
     "leftbottom": {
       "Position": {
@@ -45,10 +55,15 @@ Panels dynamically position themselves within a dock based on the dock assigned 
         "Height": 0.035
       },
       "Enabled": true,
-      "Background Color": "#0000FF00",
+      "Background Color": "#00000000",
       "Panel Alignment (Left, Center, Right)": "Left",
       "Panel Padding": 0.004,
-      "Dock Padding": 0.001
+      "Dock Padding": {
+        "Left": 0.001,
+        "Right": 0.001,
+        "Top": 0.0,
+        "Bottom": 0.0
+      }
     },
     "image": {
       "Position": {
@@ -60,7 +75,12 @@ Panels dynamically position themselves within a dock based on the dock assigned 
       "Background Color": "#00000000",
       "Panel Alignment (Left, Center, Right)": "Left",
       "Panel Padding": 0.004,
-      "Dock Padding": 0.001
+      "Dock Padding": {
+        "Left": 0.001,
+        "Right": 0.001,
+        "Top": 0.0,
+        "Bottom": 0.0
+      }
     },
     "right": {
       "Position": {
@@ -72,7 +92,12 @@ Panels dynamically position themselves within a dock based on the dock assigned 
       "Background Color": "#00000000",
       "Panel Alignment (Left, Center, Right)": "Right",
       "Panel Padding": 0.004,
-      "Dock Padding": 0.001
+      "Dock Padding": {
+        "Left": 0.001,
+        "Right": 0.001,
+        "Top": 0.0,
+        "Bottom": 0.0
+      }
     },
     "bottom": {
       "Position": {
@@ -84,7 +109,12 @@ Panels dynamically position themselves within a dock based on the dock assigned 
       "Background Color": "#00000000",
       "Panel Alignment (Left, Center, Right)": "Center",
       "Panel Padding": 0.004,
-      "Dock Padding": 0.001
+      "Dock Padding": {
+        "Left": 0.001,
+        "Right": 0.001,
+        "Top": 0.0,
+        "Bottom": 0.0
+      }
     }
   }
 }

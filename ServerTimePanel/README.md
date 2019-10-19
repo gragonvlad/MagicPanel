@@ -17,6 +17,7 @@ Displays the current in local time for the server
   "Panel Layout": {
     "Image": {
       "Url": "https://i.imgur.com/IcYSp9E.png",
+      "Enabled": true,
       "Color": "#FFFFFFFF",
       "Order": 0,
       "Width": 0.28,
@@ -31,6 +32,7 @@ Displays the current in local time for the server
       "Text": "{0:hh:mm tt}",
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
+      "Enabled": true,
       "Color": "#FF804FFF",
       "Order": 1,
       "Width": 0.72,

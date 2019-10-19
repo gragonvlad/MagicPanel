@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Fps Panel", "MJSU", "0.0.1")]
+    [Info("Fps Panel", "MJSU", "0.0.3")]
     [Description("Displays the server fps in magic panel")]
     internal class FpsPanel : RustPlugin
     {
@@ -16,11 +16,11 @@ namespace Oxide.Plugins
         private PluginConfig _pluginConfig; //Plugin Config
         private string _fpsText;
 
-        private enum UpdateEnum { All, Panel, Image, Text }
+        private enum UpdateEnum { All = 1, Panel = 2, Image = 3, Text = 4 }
         #endregion
 
         #region Setup & Loading
-        private void Loaded()
+        private void Init()
         {
             ConfigLoad();
             _fpsText = _pluginConfig.Panel.Text.Text;
@@ -42,8 +42,18 @@ namespace Oxide.Plugins
         {
             config.Panel = new Panel
             {
+                Image = new PanelImage
+                {
+                    Enabled = config.Panel?.Image?.Enabled ?? false,
+                    Color = config.Panel?.Image?.Color ?? "#FFFFFFFF",
+                    Order = config.Panel?.Image?.Order ?? 0,
+                    Width = config.Panel?.Image?.Width ?? 0.33f,
+                    Url = config.Panel?.Image?.Url ?? "",
+                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.0f, 0.2f, 0.05f)
+                },
                 Text = new PanelText
                 {
+                    Enabled = config.Panel?.Text?.Enabled ?? true,
                     Color = config.Panel?.Text?.Color ?? "#33B5E6FF",
                     Order = config.Panel?.Text?.Order ?? 1,
                     Width = config.Panel?.Text?.Width ?? 1f,
@@ -75,6 +85,12 @@ namespace Oxide.Plugins
 
         private void RegisterPanels()
         {
+            if (MagicPanel == null)
+            {
+                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                return;
+            }
+        
             MagicPanel?.Call("RegisterGlobalPanel", this, Name, JsonConvert.SerializeObject(_pluginConfig.PanelSettings), nameof(GetPanel));
         }
         #endregion
@@ -124,10 +140,11 @@ namespace Oxide.Plugins
 
         private abstract class PanelType
         {
+            public bool Enabled { get; set; }
             public string Color { get; set; }
             public int Order { get; set; }
             public float Width { get; set; }
-            public TypePadding Padding { get; set; } = new TypePadding();
+            public TypePadding Padding { get; set; }
         }
 
         private class PanelImage : PanelType
@@ -150,14 +167,6 @@ namespace Oxide.Plugins
             public float Right { get; set; }
             public float Top { get; set; }
             public float Bottom { get; set; }
-
-            public TypePadding()
-            {
-                Left = 0;
-                Right = 0;
-                Top = 0;
-                Bottom = 0;
-            }
 
             public TypePadding(float left, float right, float top, float bottom)
             {

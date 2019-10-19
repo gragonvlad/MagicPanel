@@ -15,11 +15,24 @@ Displays the current ping for the player
     "BackgroundColor": "#FFF2DF08"
   },
   "Panel Layout": {
-    "Image": null,
+    "Image": {
+      "Url": "",
+      "Enabled": false,
+      "Color": "#FFFFFFFF",
+      "Order": 0,
+      "Width": 0.33,
+      "Padding": {
+        "Left": 0.05,
+        "Right": 0.0,
+        "Top": 0.05,
+        "Bottom": 0.05
+      }
+    },
     "Text": {
       "Text": "Ping: {0}ms",
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
+      "Enabled": true,
       "Color": "#32CD32FF",
       "Order": 1,
       "Width": 1.0,

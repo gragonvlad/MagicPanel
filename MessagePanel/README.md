@@ -16,11 +16,11 @@ Displays Messages
         "BackgroundColor": "#FFF2DF08"
       },
       "Panel Layout": {
-        "Image": null,
         "Text": {
           "Text": "",
           "FontSize": 14,
           "TextAnchor": "MiddleCenter",
+          "Enabled": true,
           "Color": "#FFFFFFFF",
           "Order": 1,
           "Width": 1.0,

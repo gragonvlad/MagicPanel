@@ -16,6 +16,7 @@ Displays the current sleeper count
   "Panel Layout": {
     "Image": {
       "Url": "https://i.imgur.com/spdF7sR.png",
+      "Enabled": true,
       "Color": "#FFFFFFFF",
       "Order": 0,
       "Width": 0.4,
@@ -30,6 +31,7 @@ Displays the current sleeper count
       "Text": "{0}",
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
+      "Enabled": true,
       "Color": "#FFF500FF",
       "Order": 1,
       "Width": 0.6,

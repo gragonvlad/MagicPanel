@@ -18,6 +18,7 @@ Change the color of the Radiation Icon when a player is in a radiation zone
   "Panel Layout": {
     "Image": {
       "Url": "http://i.imgur.com/owVdFsK.png",
+      "Enabled": true,
       "Color": "#FFFFFFFF",
       "Order": 0,
       "Width": 1.0,
@@ -27,8 +28,7 @@ Change the color of the Radiation Icon when a player is in a radiation zone
         "Top": 0.05,
         "Bottom": 0.05
       }
-    },
-    "Text": null
+    }
   }
 }
  ```

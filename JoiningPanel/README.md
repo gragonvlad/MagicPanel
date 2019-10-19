@@ -16,6 +16,7 @@ Displays how many players a currently joining
   "Panel Layout": {
     "Image": {
       "Url": "https://i.imgur.com/l0kKN4c.png",
+      "Enabled": true,
       "Color": "#FFFFFFFF",
       "Order": 0,
       "Width": 0.33,
@@ -30,6 +31,7 @@ Displays how many players a currently joining
       "Text": "{0}",
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
+      "Enabled": true,
       "Color": "#FD5F00FF",
       "Order": 1,
       "Width": 0.67,

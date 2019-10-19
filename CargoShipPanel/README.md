@@ -19,6 +19,7 @@ Change the color of the Cargo Ship icon when the Cargo Ship is active
   "Panel Layout": {
     "Image": {
       "Url": "https://i.imgur.com/LhZndt9.png",
+      "Enabled": true,
       "Color": "#FFFFFFFF",
       "Order": 0,
       "Width": 1.0,
@@ -28,8 +29,7 @@ Change the color of the Cargo Ship icon when the Cargo Ship is active
         "Top": 0.1,
         "Bottom": 0.1
       }
-    },
-    "Text": null
+    }
   }
 }
  ```

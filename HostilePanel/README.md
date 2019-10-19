@@ -1,25 +1,26 @@
-# Clock Panel
+# Hostile Panel
 
 ## About
-Displays the current in game time
+Displays how much longer the player is considered hostile
 
 ## Configuration
  
  ```json
 {
+  "Show hide panel": true,
   "Panel Settings": {
-    "Dock": "leftbottom",
-    "Width": 0.075,
-    "Order": 1,
-    "BackgroundColor": "#FFF2DF08"
+    "Dock": "right",
+    "Width": 0.08,
+    "Order": 14,
+    "BackgroundColor": "#fff2df08"
   },
   "Panel Layout": {
     "Image": {
-      "Url": "https://i.imgur.com/cSykHxd.png",
+      "Url": "https://i.imgur.com/v5sdNHg.png",
       "Enabled": true,
       "Color": "#FFFFFFFF",
       "Order": 0,
-      "Width": 0.28,
+      "Width": 0.33,
       "Padding": {
         "Left": 0.05,
         "Right": 0.0,
@@ -28,13 +29,13 @@ Displays the current in game time
       }
     },
     "Text": {
-      "Text": "{0:hh:mm tt}",
+      "Text": "{0}",
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
       "Enabled": true,
-      "Color": "#FF804FFF",
+      "Color": "#08C717FF",
       "Order": 1,
-      "Width": 0.72,
+      "Width": 0.67,
       "Padding": {
         "Left": 0.05,
         "Right": 0.05,
@@ -46,5 +47,5 @@ Displays the current in game time
 }
  ```
 
-### Time Format
-[Formatting the display time](https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings)
+### Show hide panel
+    If false will always display the panel to the player. If true the panel will be shown when the player is hostile

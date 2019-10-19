@@ -1,18 +1,20 @@
-﻿using Newtonsoft.Json;
+﻿using System.Collections.Generic;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Oxide.Core.Plugins;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Economics Panel", "MJSU", "0.0.3")]
-    [Description("Displays player economics data in MagicPanel")]
-    internal class EconomicsPanel : RustPlugin
+    [Info("Wipe Panel", "MJSU", "0.0.3")]
+    [Description("Displays days to wipe in magic panel")]
+    internal class WipePanel : RustPlugin
     {
         #region Class Fields
-        [PluginReference] private readonly Plugin MagicPanel, Economics;
-
+        [PluginReference] private readonly Plugin MagicPanel, LastWipe;
         private PluginConfig _pluginConfig; //Plugin Config
+        private int _daysTillWipe;
+        
         private string _textFormat;
 
         private enum UpdateEnum { All = 1, Panel = 2, Image = 3, Text = 4 }
@@ -23,6 +25,16 @@ namespace Oxide.Plugins
         {
             ConfigLoad();
             _textFormat = _pluginConfig.Panel.Text.Text;
+        }
+        
+        protected override void LoadDefaultMessages()
+        {
+            lang.RegisterMessages(new Dictionary<string, string>
+            {
+                [LangKeys.Today] = "Today",
+                [LangKeys.OneDay] = "1 Day",
+                [LangKeys.Days] = "{0} Days"
+            }, this);
         }
 
         protected override void LoadDefaultConfig()
@@ -43,38 +55,48 @@ namespace Oxide.Plugins
             {
                 Image = new PanelImage
                 {
-                    Enabled = config.Panel?.Image?.Enabled ?? true,
+                    Enabled = config.Panel?.Image?.Enabled ?? false,
                     Color = config.Panel?.Image?.Color ?? "#FFFFFFFF",
                     Order = config.Panel?.Image?.Order ?? 0,
-                    Width = config.Panel?.Image?.Width ?? 0.33f,
-                    Url = config.Panel?.Image?.Url ?? "https://i.imgur.com/nbEeITS.png",
-                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.0f, 0.2f, 0.05f)
+                    Width = config.Panel?.Image?.Width ?? 0.4f,
+                    Url = config.Panel?.Image?.Url ?? "",
+                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.0f, 0.1f, 0.1f)
                 },
                 Text = new PanelText
                 {
                     Enabled = config.Panel?.Text?.Enabled ?? true,
-                    Color = config.Panel?.Text?.Color ?? "#85BB65FF",
+                    Color = config.Panel?.Text?.Color ?? "#08C717FF",
                     Order = config.Panel?.Text?.Order ?? 1,
-                    Width = config.Panel?.Text?.Width ?? 0.67f,
+                    Width = config.Panel?.Text?.Width ?? 1f,
                     FontSize = config.Panel?.Text?.FontSize ?? 14,
                     Padding = config.Panel?.Text?.Padding ?? new TypePadding(0.05f, 0.05f, 0.05f, 0.05f),
                     TextAnchor = config.Panel?.Text?.TextAnchor ?? TextAnchor.MiddleCenter,
-                    Text = config.Panel?.Text?.Text ?? "{0:0.00}",
+                    Text = config.Panel?.Text?.Text ?? "Wipe: {0}",
                 }
             };
             config.PanelSettings = new PanelRegistration
             {
                 BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#FFF2DF08",
-                Dock = config.PanelSettings?.Dock ?? "leftmiddle",
-                Order = config.PanelSettings?.Order ?? 0,
-                Width = config.PanelSettings?.Width ?? 0.07f
+                Dock = config.PanelSettings?.Dock ?? "right",
+                Order = config.PanelSettings?.Order ?? 10,
+                Width = config.PanelSettings?.Width ?? 0.08f
             };
             return config;
         }
 
         private void OnServerInitialized()
         {
-            RegisterPanels();
+            OnWipeCalculated();
+        }
+        
+        private void OnWipeCalculated()
+        {
+            timer.In(1f, () =>
+            {
+                _daysTillWipe = LastWipe.Call<int>("DaysTillWipe");
+                MagicPanel?.Call("UpdatePanel", Name, UpdateEnum.Text);
+                RegisterPanels();
+            });
         }
 
         private void RegisterPanels()
@@ -85,31 +107,39 @@ namespace Oxide.Plugins
                 return;
             }
         
-            MagicPanel?.Call("RegisterPlayerPanel", this, Name, JsonConvert.SerializeObject(_pluginConfig.PanelSettings), nameof(GetPanel));
-        }
-        #endregion
-
-        #region Economics Hook
-        private void OnBalanceChanged(ulong playerId, double amount)
-        {
-            BasePlayer player = BasePlayer.FindByID(playerId);
-            MagicPanel?.Call("UpdatePanel", player, Name, (int)UpdateEnum.Text);
+            MagicPanel?.Call("RegisterGlobalPanel", this, Name, JsonConvert.SerializeObject(_pluginConfig.PanelSettings), nameof(GetPanel));
         }
         #endregion
 
         #region Helper Methods
 
-        private string GetPanel(BasePlayer player)
+        private string GetPanel()
         {
             Panel panel = _pluginConfig.Panel;
             PanelText text = panel.Text;
             if (text != null)
             {
-                text.Text = string.Format(_textFormat, Economics?.Call<double>("Balance", player.userID) ?? 0);
+                string message;
+                if (_daysTillWipe == 0)
+                {
+                    message = Lang(LangKeys.Today);
+                }
+                else if (_daysTillWipe == 1)
+                {
+                    message = Lang(LangKeys.OneDay);
+                }
+                else
+                {
+                    message = Lang(LangKeys.Days, _daysTillWipe);
+                }
+
+                text.Text = string.Format(_textFormat, message);
             }
 
             return JsonConvert.SerializeObject(panel);
         }
+        
+        private string Lang(string key, params object[] args) => string.Format(lang.GetMessage(key, this), args);
         #endregion
 
         #region Classes
@@ -120,6 +150,13 @@ namespace Oxide.Plugins
 
             [JsonProperty(PropertyName = "Panel Layout")]
             public Panel Panel { get; set; }
+        }
+        
+        private class LangKeys
+        {
+            public const string Today = "Today";
+            public const string OneDay = "OneDay";
+            public const string Days = "Days";
         }
 
         private class PanelRegistration

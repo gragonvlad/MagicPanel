@@ -1,18 +1,19 @@
-﻿using System.ComponentModel;
-using System.Linq;
-using Newtonsoft.Json;
+﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Oxide.Core.Plugins;
+using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Radiation Panel", "MJSU", "0.0.3")]
-    [Description("Displays if players are in a radiation zone")]
-    internal class RadiationPanel : RustPlugin
+    [Info("Wipe Panel", "MJSU", "0.0.3")]
+    [Description("Displays days to wipe in magic panel")]
+    internal class LastWipePanel : RustPlugin
     {
         #region Class Fields
         [PluginReference] private readonly Plugin MagicPanel;
-
         private PluginConfig _pluginConfig; //Plugin Config
+
+        private string _textFormat;
 
         private enum UpdateEnum { All = 1, Panel = 2, Image = 3, Text = 4 }
         #endregion
@@ -21,6 +22,7 @@ namespace Oxide.Plugins
         private void Init()
         {
             ConfigLoad();
+            _textFormat = _pluginConfig.Panel.Text.Text;
         }
 
         protected override void LoadDefaultConfig()
@@ -41,20 +43,31 @@ namespace Oxide.Plugins
             {
                 Image = new PanelImage
                 {
-                    Enabled = config.Panel?.Image?.Enabled ?? true,
+                    Enabled = config.Panel?.Image?.Enabled ?? false,
                     Color = config.Panel?.Image?.Color ?? "#FFFFFFFF",
                     Order = config.Panel?.Image?.Order ?? 0,
-                    Width = config.Panel?.Image?.Width ?? 1f,
-                    Url = config.Panel?.Image?.Url ?? "http://i.imgur.com/owVdFsK.png",
-                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.05f, 0.05f, 0.05f)
+                    Width = config.Panel?.Image?.Width ?? 0.33f,
+                    Url = config.Panel?.Image?.Url ?? "",
+                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.0f, 0.05f, 0.05f)
+                },
+                Text = new PanelText
+                {
+                    Enabled = config.Panel?.Text?.Enabled ?? true,
+                    Color = config.Panel?.Text?.Color ?? "#08C717FF",
+                    Order = config.Panel?.Text?.Order ?? 1,
+                    Width = config.Panel?.Text?.Width ?? 1f,
+                    FontSize = config.Panel?.Text?.FontSize ?? 12,
+                    Padding = config.Panel?.Text?.Padding ?? new TypePadding(0.05f, 0.05f, 0.05f, 0.05f),
+                    TextAnchor = config.Panel?.Text?.TextAnchor ?? TextAnchor.MiddleCenter,
+                    Text = config.Panel?.Text?.Text ?? "Last Wipe: {0:MM/dd/yyyy}",
                 }
             };
             config.PanelSettings = new PanelRegistration
             {
                 BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#FFF2DF08",
                 Dock = config.PanelSettings?.Dock ?? "right",
-                Order = config.PanelSettings?.Order ?? 7,
-                Width = config.PanelSettings?.Width ?? 0.02f
+                Order = config.PanelSettings?.Order ?? 9,
+                Width = config.PanelSettings?.Width ?? 0.1f
             };
             return config;
         }
@@ -72,56 +85,19 @@ namespace Oxide.Plugins
                 return;
             }
         
-            MagicPanel?.Call("RegisterPlayerPanel", this, Name, JsonConvert.SerializeObject(_pluginConfig.PanelSettings), nameof(GetPanel));
-        }
-        #endregion
-
-        #region Radiation Zone Hooks
-        private void OnEntityEnter(TriggerBase trigger, BaseEntity entity)
-        {
-            TriggerRadiation rad = trigger as TriggerRadiation;
-            BasePlayer player = entity as BasePlayer;
-
-            if (rad == null || player == null || entity.IsNpc)
-            {
-                return;
-            }
-
-            NextTick(() =>
-            {
-                MagicPanel?.Call("UpdatePanel", player, Name, (int)UpdateEnum.Image);
-            });
-        }
-
-        private void OnEntityLeave(TriggerBase trigger, BaseEntity entity)
-        {
-            TriggerRadiation rad = trigger as TriggerRadiation;
-            BasePlayer player = entity as BasePlayer;
-
-            if (rad == null || player == null || player.IsDead() || entity.IsNpc)
-            {
-                return;
-            }
-
-            NextTick(() =>
-            {
-                if (player.triggers?.OfType<TriggerRadiation>().Any() ?? true)
-                {
-                    MagicPanel?.Call("UpdatePanel", player, Name, (int)UpdateEnum.Image);
-                }
-            });
+            MagicPanel?.Call("RegisterGlobalPanel", this, Name, JsonConvert.SerializeObject(_pluginConfig.PanelSettings), nameof(GetPanel));
         }
         #endregion
 
         #region Helper Methods
 
-        private string GetPanel(BasePlayer player)
+        private string GetPanel()
         {
             Panel panel = _pluginConfig.Panel;
-            PanelImage image = panel.Image;
-            if (image != null)
+            PanelText text = panel.Text;
+            if (text != null)
             {
-                image.Color = player.FindTrigger<TriggerRadiation>() != null ? _pluginConfig.ActiveColor : _pluginConfig.InactiveColor;
+                text.Text = string.Format(_textFormat, SaveRestore.SaveCreatedTime);
             }
 
             return JsonConvert.SerializeObject(panel);
@@ -129,17 +105,8 @@ namespace Oxide.Plugins
         #endregion
 
         #region Classes
-
         private class PluginConfig
         {
-            [DefaultValue("#FFFF00FF")]
-            [JsonProperty(PropertyName = "Active Color")]
-            public string ActiveColor { get; set; }
-
-            [DefaultValue("#FFFFFF1A")]
-            [JsonProperty(PropertyName = "Inactive Color")]
-            public string InactiveColor { get; set; }
-
             [JsonProperty(PropertyName = "Panel Settings")]
             public PanelRegistration PanelSettings { get; set; }
 
@@ -158,6 +125,7 @@ namespace Oxide.Plugins
         private class Panel
         {
             public PanelImage Image { get; set; }
+            public PanelText Text { get; set; }
         }
 
         private abstract class PanelType
@@ -172,6 +140,15 @@ namespace Oxide.Plugins
         private class PanelImage : PanelType
         {
             public string Url { get; set; }
+        }
+
+        private class PanelText : PanelType
+        {
+            public string Text { get; set; }
+            public int FontSize { get; set; }
+
+            [JsonConverter(typeof(StringEnumConverter))]
+            public TextAnchor TextAnchor { get; set; }
         }
 
         private class TypePadding

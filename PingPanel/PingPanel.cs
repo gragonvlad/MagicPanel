@@ -4,11 +4,10 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Oxide.Core.Plugins;
 using UnityEngine;
-using VLB;
 
 namespace Oxide.Plugins
 {
-    [Info("Ping Panel", "MJSU", "0.0.1")]
+    [Info("Ping Panel", "MJSU", "0.0.3")]
     [Description("Displays players ping in magic panel")]
     internal class PingPanel : RustPlugin
     {
@@ -19,13 +18,13 @@ namespace Oxide.Plugins
 
         private static PingPanel _ins;
 
-        private enum UpdateEnum { All, Panel, Image, Text }
+        private enum UpdateEnum { All = 1, Panel = 2, Image = 3, Text = 4 }
         
         private string _text;
         #endregion
 
         #region Setup & Loading
-        private void Loaded()
+        private void Init()
         {
             _ins = this;
             ConfigLoad();
@@ -48,8 +47,18 @@ namespace Oxide.Plugins
         {
             config.Panel = new Panel
             {
+                Image = new PanelImage
+                {
+                    Enabled = config.Panel?.Image?.Enabled ?? false,
+                    Color = config.Panel?.Image?.Color ?? "#FFFFFFFF",
+                    Order = config.Panel?.Image?.Order ?? 0,
+                    Width = config.Panel?.Image?.Width ?? 0.33f,
+                    Url = config.Panel?.Image?.Url ?? "",
+                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.0f, 0.05f, 0.05f)
+                },
                 Text = new PanelText
                 {
+                    Enabled = config.Panel?.Text?.Enabled ?? true,
                     Color = config.Panel?.Text?.Color ?? "#32CD32FF",
                     Order = config.Panel?.Text?.Order ?? 1,
                     Width = config.Panel?.Text?.Width ?? 1,
@@ -80,6 +89,12 @@ namespace Oxide.Plugins
 
         private void RegisterPanels()
         {
+            if (MagicPanel == null)
+            {
+                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                return;
+            }
+        
             MagicPanel?.Call("RegisterPlayerPanel", this, Name, JsonConvert.SerializeObject(_pluginConfig.PanelSettings), nameof(GetPanel));
         }
 
@@ -107,7 +122,10 @@ namespace Oxide.Plugins
 
         private void AddBehavior(BasePlayer player)
         {
-            player.GetOrAddComponent<PingBehavior>();
+            if (player.GetComponent<PingBehavior>() == null)
+            {
+                player.gameObject.AddComponent<PingBehavior>();
+            }
         }
 
         private string GetPanel(BasePlayer player)
@@ -200,10 +218,11 @@ namespace Oxide.Plugins
 
         private abstract class PanelType
         {
+            public bool Enabled { get; set; }
             public string Color { get; set; }
             public int Order { get; set; }
             public float Width { get; set; }
-            public TypePadding Padding { get; set; } = new TypePadding();
+            public TypePadding Padding { get; set; }
         }
 
         private class PanelImage : PanelType
@@ -226,14 +245,6 @@ namespace Oxide.Plugins
             public float Right { get; set; }
             public float Top { get; set; }
             public float Bottom { get; set; }
-
-            public TypePadding()
-            {
-                Left = 0;
-                Right = 0;
-                Top = 0;
-                Bottom = 0;
-            }
 
             public TypePadding(float left, float right, float top, float bottom)
             {

@@ -18,6 +18,7 @@ Displays images
       "Panel Layout": {
         "Image": {
           "Url": "https://i.imgur.com/FnVe2Fl.png",
+          "Enabled": true,
           "Color": "#FFFFFFFF",
           "Order": 0,
           "Width": 1.0,
@@ -27,8 +28,7 @@ Displays images
             "Top": 0.05,
             "Bottom": 0.05
           }
-        },
-        "Text": null
+        }
       }
     },
     "ImagesPanel_2": {
@@ -41,6 +41,7 @@ Displays images
       "Panel Layout": {
         "Image": {
           "Url": "https://i.imgur.com/FnVe2Fl.png",
+          "Enabled": true,
           "Color": "#FFFFFFFF",
           "Order": 0,
           "Width": 1.0,
@@ -50,8 +51,7 @@ Displays images
             "Top": 0.05,
             "Bottom": 0.05
           }
-        },
-        "Text": null
+        }
       }
     }
   }
