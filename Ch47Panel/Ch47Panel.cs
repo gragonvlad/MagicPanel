@@ -7,7 +7,7 @@ using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("Ch47 Panel", "MJSU", "0.0.3")]
+    [Info("Ch47 Panel", "MJSU", "0.0.4")]
     [Description("Displays is the Ch47 event is active")]
     internal class Ch47Panel : RustPlugin
     {
@@ -22,18 +22,14 @@ namespace Oxide.Plugins
         #endregion
 
         #region Setup & Loading
-        private void Init()
-        {
-            ConfigLoad();
-        }
-
         protected override void LoadDefaultConfig()
         {
             PrintWarning("Loading Default Config");
         }
 
-        private void ConfigLoad()
+        protected override void LoadConfig()
         {
+            base.LoadConfig();
             Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
             _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
             Config.WriteObject(_pluginConfig);
@@ -56,7 +52,7 @@ namespace Oxide.Plugins
             config.PanelSettings = new PanelRegistration
             {
                 BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#FFF2DF08",
-                Dock = config.PanelSettings?.Dock ?? "right",
+                Dock = config.PanelSettings?.Dock ?? "center",
                 Order = config.PanelSettings?.Order ?? 2,
                 Width = config.PanelSettings?.Width ?? 0.02f
             };
@@ -119,9 +115,9 @@ namespace Oxide.Plugins
         #endregion
 
         #region Helper Methods
-        private bool CanShowPanel(CH47Helicopter cargo)
+        private bool CanShowPanel(CH47Helicopter heli)
         {
-            object result = Interface.Call("MagicPanelCanShow", Name, cargo);
+            object result = Interface.Call("MagicPanelCanShow", Name, heli);
             if (result is bool)
             {
                 return (bool) result;
@@ -147,7 +143,7 @@ namespace Oxide.Plugins
 
         private class PluginConfig
         {
-            [DefaultValue("#008000FF")]
+            [DefaultValue("#00FF00FF")]
             [JsonProperty(PropertyName = "Active Color")]
             public string ActiveColor { get; set; }
 

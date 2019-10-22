@@ -11,9 +11,9 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Last Wipe", "MJSU", "0.0.1")]
+    [Info("Wipe Info", "MJSU", "0.0.1")]
     [Description("Tells players when the last and next wipe is")]
-    internal class LastWipe : RustPlugin
+    internal class WipeInfo : RustPlugin
     {
         #region Class Fields
         [PluginReference] private Plugin DiscordCore;
@@ -172,7 +172,7 @@ namespace Oxide.Plugins
 
             _nextWipe = wipes.OrderBy(w => w).FirstOrDefault(w => w > DateTime.UtcNow);
             _daysTillNextWipe = (_nextWipe - DateTime.Today).Days;
-            Puts($"Next Wipe: {_nextWipe} Days Until: {_daysTillNextWipe}\n{GetWipeText()}");
+            //Puts($"Next Wipe: {_nextWipe} Days Until: {_daysTillNextWipe}\n{GetWipeText()}");
             Interface.Call("OnWipeCalculated");
         }
 

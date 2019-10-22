@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Hostile Panel", "MJSU", "0.0.3")]
+    [Info("Hostile Panel", "MJSU", "0.0.4")]
     [Description("Displays how much longer a player is considered hostile")]
     internal class HostilePanel : RustPlugin
     {
@@ -25,7 +25,6 @@ namespace Oxide.Plugins
         #region Setup & Loading
         private void Init()
         {
-            ConfigLoad();
             _panelText = _pluginConfig.Panel.Text.Text;
         }
 
@@ -34,8 +33,9 @@ namespace Oxide.Plugins
             PrintWarning("Loading Default Config");
         }
 
-        private void ConfigLoad()
+        protected override void LoadConfig()
         {
+            base.LoadConfig();
             Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
             _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
             Config.WriteObject(_pluginConfig);
@@ -69,7 +69,7 @@ namespace Oxide.Plugins
             config.PanelSettings = new PanelRegistration
             {
                 BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#fff2df08",
-                Dock = config.PanelSettings?.Dock ?? "right",
+                Dock = config.PanelSettings?.Dock ?? "centerupper",
                 Order = config.PanelSettings?.Order ?? 14,
                 Width = config.PanelSettings?.Width ?? 0.08f
             };

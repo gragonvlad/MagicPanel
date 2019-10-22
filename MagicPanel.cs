@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using Newtonsoft.Json;
@@ -10,21 +11,25 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Magic Panel", "MJSU", "0.0.3")]
+    [Info("Magic Panel", "MJSU", "0.0.4")]
     [Description("Displays information to the players on their hud.")]
     internal class MagicPanel : RustPlugin
     {
         #region Class Fields
+        [PluginReference] private Plugin ImageLibrary;
+        
         private StoredData _storedData; //Plugin Data
         private PluginConfig _pluginConfig; //Plugin Config
 
         private readonly Hash<string, Hash<string, float>> _panelPositions = new Hash<string, Hash<string, float>>();
         private readonly Hash<string, PanelRegistration> _registeredPanels = new Hash<string, PanelRegistration>();
         private readonly Hash<string, HiddenPanelInfo> _hiddenPanels = new Hash<string, HiddenPanelInfo>();
+        private readonly Hash<string, string> _imageCache = new Hash<string, string>();
 
         private const string AccentColor = "#de8732";
 
         private bool _init;
+        private bool _imageLibraryEnabled;
 
         private enum UpdateEnum { All = 1, Panel = 2, Image = 3, Text = 4 }
         private enum PanelAlignEnum { Left = 1, Center = 2, Right = 3 }
@@ -35,9 +40,9 @@ namespace Oxide.Plugins
         #region Setup & Loading
         private void Init()
         {
-            ConfigLoad();
-
             _storedData = Interface.Oxide.DataFileSystem.ReadObject<StoredData>(Name);
+            
+            cmd.AddChatCommand(_pluginConfig.ChatCommand, this, MagicPanelChatCommand);
         }
         
         protected override void LoadDefaultMessages()
@@ -59,8 +64,9 @@ namespace Oxide.Plugins
             PrintWarning("Loading Default Config");
         }
 
-        private void ConfigLoad()
+        protected override void LoadConfig()
         {
+            base.LoadConfig();
             Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
             _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
             Config.WriteObject(_pluginConfig);
@@ -126,7 +132,7 @@ namespace Oxide.Plugins
                     DockPadding = new TypePadding(0.001f, 0.001f, 0, 0),
                     PanelPadding = 0.004f
                 },
-                ["right"] = new DockData
+                ["center"] = new DockData
                 {
                     BackgroundColor = "#00000000",
                     Enabled = true,
@@ -134,7 +140,21 @@ namespace Oxide.Plugins
                     Position = new DockPosition
                     {
                         XPos = 0.644f,
-                        StartYPos = 0.109f,// .01f,
+                        StartYPos = 0.109f,
+                        Height = 0.035f
+                    },
+                    DockPadding = new TypePadding(0.001f, 0.001f, 0, 0),
+                    PanelPadding = 0.004f
+                },
+                ["centerupper"] = new DockData
+                {
+                    BackgroundColor = "#00000000",
+                    Enabled = true,
+                    Alignment = PanelAlignEnum.Center,
+                    Position = new DockPosition
+                    {
+                        XPos = .4966f,
+                        StartYPos = 0.145f,
                         Height = 0.035f
                     },
                     DockPadding = new TypePadding(0.001f, 0.001f, 0, 0),
@@ -160,6 +180,8 @@ namespace Oxide.Plugins
 
         private void OnServerInitialized()
         {
+            _imageLibraryEnabled = ImageLibrary != null && _pluginConfig.UseImageLibrary;
+            
             NextTick(() =>
             {
                 Interface.Call("RegisterPanels");
@@ -174,36 +196,6 @@ namespace Oxide.Plugins
             });
         }
 
-        private void OnPluginUnloaded(Plugin plugin)
-        {
-            UnregisterPluginPanels(plugin);
-        }
-
-        private void OnPlayerInit(BasePlayer player)
-        {
-            if (player.IsSleeping())
-            {
-                timer.In(1f, () => { OnPlayerInit(player); });
-                return;
-            }
-
-            DrawDock(new List<BasePlayer> { player });
-
-            NextTick(() =>
-            {
-                List<BasePlayer> playerList = new List<BasePlayer> { player };
-                foreach (PanelRegistration panel in _registeredPanels.Values)
-                {
-                    DrawPanel(playerList, panel, UpdateEnum.All);
-                }
-            });
-        }
-
-        private void OnPlayerDisconnected(BasePlayer player, string reason)
-        {
-            DestroyAllUi(player);
-        }
-
         private void Unload()
         {
             foreach (BasePlayer player in BasePlayer.activePlayerList)
@@ -214,8 +206,6 @@ namespace Oxide.Plugins
         #endregion
 
         #region Chat Commands
-
-        [ChatCommand("mp")]
         private void MagicPanelChatCommand(BasePlayer player, string cmd, string[] args)
         {
             PlayerSettings settings = _storedData.Settings[player.userID];
@@ -259,6 +249,38 @@ namespace Oxide.Plugins
         private void DisplayHelp(BasePlayer player)
         {
             Chat(player, Lang(LangKeys.Help, player));
+        }
+        #endregion
+
+        #region uMod Hooks
+        private void OnPluginUnloaded(Plugin plugin)
+        {
+            UnregisterPluginPanels(plugin);
+        }
+
+        private void OnPlayerInit(BasePlayer player)
+        {
+            if (player.IsSleeping())
+            {
+                timer.In(1f, () => { OnPlayerInit(player); });
+                return;
+            }
+
+            DrawDock(new List<BasePlayer> { player });
+
+            NextTick(() =>
+            {
+                List<BasePlayer> playerList = new List<BasePlayer> { player };
+                foreach (PanelRegistration panel in _registeredPanels.Values)
+                {
+                    DrawPanel(playerList, panel, UpdateEnum.All);
+                }
+            });
+        }
+
+        private void OnPlayerDisconnected(BasePlayer player, string reason)
+        {
+            DestroyAllUi(player);
         }
         #endregion
 
@@ -365,21 +387,17 @@ namespace Oxide.Plugins
                     startX -= panel.Width + dock.PanelPadding;
                 }
                 
-                startX -= leftOffset;
+                startX -= leftOffset + rightOffSet;
+                dockPanels = dockPanels.OrderByDescending(p => p.Order).ToList();
             }
             else if (align == PanelAlignEnum.Center)
             {
                 foreach (PanelRegistration panel in dockPanels)
                 {
-                    startX -= panel.Width / 2 + dock.PanelPadding;
+                    startX -= panel.Width / 2 + dock.PanelPadding / 2;
                 }
 
                 startX -= (leftOffset + rightOffSet) / 2;
-            } 
-            
-            if (align == PanelAlignEnum.Right)
-            {
-                dockPanels = dockPanels.OrderByDescending(p => p.Order).ToList();
             }
 
             float offset = leftOffset;
@@ -648,7 +666,7 @@ namespace Oxide.Plugins
             string imageName = GetPanelUiImageName(panelName);
             UiPosition pos = GetPaddedPosition(offset, panel.Image.Width, panel.Image.Padding, dockPadding);
             CuiElementContainer container = Ui.Container(_clearColor, pos, false, imageName, panelName);
-            Ui.LoadImage(ref container, panel.Image.Url ?? string.Empty, Ui.Color(panel.Image.Color), _fullSize);
+            Ui.Image(ref container, GetImage(panel.Image.Url) ?? string.Empty, Ui.Color(panel.Image.Color), _fullSize);
             return new PanelUpdate
             {
                 Container = container,
@@ -667,6 +685,57 @@ namespace Oxide.Plugins
                 Container = container,
                 PanelName = textName
             };
+        }
+        #endregion
+
+        #region Image Library
+        private bool IsReady()
+        {
+            return ImageLibrary.Call<bool>("IsReady");
+        }
+        
+        private void AddImage(string image)
+        {
+            ImageLibrary.Call("AddImage", image, image, (ulong)0);
+        }
+        
+        private bool HasImage(string image)
+        {
+            return ImageLibrary.Call<bool>("HasImage", image, (ulong)0);
+        }
+
+        private string GetImage(string image)
+        {
+            if (!_imageLibraryEnabled)
+            {
+                return image;
+            }
+            
+            string cache = _imageCache[image];
+            if (!string.IsNullOrEmpty(cache))
+            {
+                return cache;
+            }
+            
+            if (!IsReady())
+            {
+                return image;
+            }
+            
+            if (!HasImage(image))
+            {
+                AddImage(image);
+                return image;
+            }
+            
+            string data = ImageLibrary.Call<string>("GetImage", image, (ulong)0, true);
+            if (string.IsNullOrEmpty(data))
+            {
+                return image;
+            }
+
+            _imageCache[image] = data;
+            return data;
         }
         #endregion
 
@@ -738,6 +807,14 @@ namespace Oxide.Plugins
         #region Classes
         private class PluginConfig
         {
+            [DefaultValue("mp")]
+            [JsonProperty(PropertyName = "Chat Command")]
+            public string ChatCommand { get; set; }
+            
+            [DefaultValue(true)]
+            [JsonProperty(PropertyName = "Use Image Library")]
+            public bool UseImageLibrary { get; set; }
+            
             [JsonProperty(PropertyName = "Docks")]
             public Hash<string, DockData> Docks { get; set; }
         }
@@ -916,7 +993,7 @@ namespace Oxide.Plugins
                 UiPanel);
             }
 
-            public static void LoadImage(ref CuiElementContainer container, string png, string color, UiPosition pos)
+            public static void Image(ref CuiElementContainer container, string png, string color, UiPosition pos)
             {
                 container.Add(new CuiElement
                 {
@@ -933,6 +1010,10 @@ namespace Oxide.Plugins
             public static string Color(string hexColor)
             {
                 hexColor = hexColor.TrimStart('#');
+                if (hexColor.Length != 6 && hexColor.Length != 8)
+                {
+                    hexColor = "000000";
+                }
                 int red = int.Parse(hexColor.Substring(0, 2), NumberStyles.AllowHexSpecifier);
                 int green = int.Parse(hexColor.Substring(2, 2), NumberStyles.AllowHexSpecifier);
                 int blue = int.Parse(hexColor.Substring(4, 2), NumberStyles.AllowHexSpecifier);
@@ -948,10 +1029,10 @@ namespace Oxide.Plugins
 
         private class UiPosition
         {
-            public float XPos { get; set; }
-            public float YPos { get; set; }
-            public float Width { get; set; }
-            public float Height { get; set; }
+            private float XPos { get; }
+            private float YPos { get; }
+            private float Width { get; }
+            private float Height { get; }
 
             public UiPosition(float xPos, float yPos, float width, float height)
             {

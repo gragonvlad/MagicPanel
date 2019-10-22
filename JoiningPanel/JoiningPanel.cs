@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Joining Panel", "MJSU", "0.0.3")]
+    [Info("Joining Panel", "MJSU", "0.0.4")]
     [Description("Displays joining player count in magic panel")]
     internal class JoiningPanel : RustPlugin
     {
@@ -24,7 +24,6 @@ namespace Oxide.Plugins
         #region Setup & Loading
         private void Init()
         {
-            ConfigLoad();
             _textFormat = _pluginConfig.Panel.Text.Text;
         }
 
@@ -33,8 +32,9 @@ namespace Oxide.Plugins
             PrintWarning("Loading Default Config");
         }
 
-        private void ConfigLoad()
+        protected override void LoadConfig()
         {
+            base.LoadConfig();
             Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
             _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
             Config.WriteObject(_pluginConfig);
@@ -77,15 +77,15 @@ namespace Oxide.Plugins
 
         private void OnServerInitialized()
         {
-            RegisterPanels();
             _joiningCount = ServerMgr.Instance.connectionQueue.Joining;
+            RegisterPanels();
 
             timer.Every(_pluginConfig.UpdateRate, () =>
             {
-                int queued = ServerMgr.Instance.connectionQueue.Joining;
-                if (queued != _joiningCount)
+                int joining = ServerMgr.Instance.connectionQueue.Joining;
+                if (joining != _joiningCount)
                 {
-                    _joiningCount = queued;
+                    _joiningCount = joining;
                     UpdatePanel();
                 }
             });
@@ -129,7 +129,7 @@ namespace Oxide.Plugins
             PanelText text = panel.Text;
             if (text != null)
             {
-                text.Text = string.Format(_textFormat, ServerMgr.Instance.connectionQueue.Queued);
+                text.Text = string.Format(_textFormat, ServerMgr.Instance.connectionQueue.Joining);
             }
 
             return JsonConvert.SerializeObject(panel);

@@ -1,4 +1,4 @@
-# Last Wipe
+# Wipe Info
 
 ## Optional Dependency
 DiscordCore

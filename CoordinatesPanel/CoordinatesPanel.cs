@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Coordinates Panel", "MJSU", "0.0.3")]
+    [Info("Coordinates Panel", "MJSU", "0.0.4")]
     [Description("Displays players coordinates in magic panel")]
     internal class CoordinatesPanel : RustPlugin
     {
@@ -26,7 +26,6 @@ namespace Oxide.Plugins
         private void Init()
         {
             _ins = this;
-            ConfigLoad();
             _coordText = _pluginConfig.Panel.Text.Text;
         }
 
@@ -35,8 +34,9 @@ namespace Oxide.Plugins
             PrintWarning("Loading Default Config");
         }
 
-        private void ConfigLoad()
+        protected override void LoadConfig()
         {
+            base.LoadConfig();
             Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
             _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
             Config.WriteObject(_pluginConfig);

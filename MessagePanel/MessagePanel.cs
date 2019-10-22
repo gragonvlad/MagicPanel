@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Message Panel", "MJSU", "0.0.3")]
+    [Info("Message Panel", "MJSU", "0.0.4")]
     [Description("Displays messages to the player")]
     internal class MessagePanel : RustPlugin
     {
@@ -20,18 +20,14 @@ namespace Oxide.Plugins
         #endregion
 
         #region Setup & Loading
-        private void Init()
-        {
-            ConfigLoad();
-        }
-
         protected override void LoadDefaultConfig()
         {
             PrintWarning("Loading Default Config");
         }
 
-        private void ConfigLoad()
+        protected override void LoadConfig()
         {
+            base.LoadConfig();
             Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
             _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
             Config.WriteObject(_pluginConfig);

@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Clock Panel", "MJSU", "0.0.3")]
+    [Info("Clock Panel", "MJSU", "0.0.4")]
     [Description("Displays the in game time in magic panel")]
     internal class ClockPanel : RustPlugin
     {
@@ -25,7 +25,6 @@ namespace Oxide.Plugins
         #region Setup & Loading
         private void Init()
         {
-            ConfigLoad();
             _textFormat = _pluginConfig.Panel.Text.Text;
         }
 
@@ -34,8 +33,9 @@ namespace Oxide.Plugins
             PrintWarning("Loading Default Config");
         }
 
-        private void ConfigLoad()
+        protected override void LoadConfig()
         {
+            base.LoadConfig();
             Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
             _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
             Config.WriteObject(_pluginConfig);

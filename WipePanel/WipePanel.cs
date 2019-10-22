@@ -6,12 +6,12 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Wipe Panel", "MJSU", "0.0.3")]
+    [Info("Wipe Panel", "MJSU", "0.0.4")]
     [Description("Displays days to wipe in magic panel")]
     internal class WipePanel : RustPlugin
     {
         #region Class Fields
-        [PluginReference] private readonly Plugin MagicPanel, LastWipe;
+        [PluginReference] private readonly Plugin MagicPanel, WipeInfo;
         private PluginConfig _pluginConfig; //Plugin Config
         private int _daysTillWipe;
         
@@ -23,7 +23,6 @@ namespace Oxide.Plugins
         #region Setup & Loading
         private void Init()
         {
-            ConfigLoad();
             _textFormat = _pluginConfig.Panel.Text.Text;
         }
         
@@ -42,8 +41,9 @@ namespace Oxide.Plugins
             PrintWarning("Loading Default Config");
         }
 
-        private void ConfigLoad()
+        protected override void LoadConfig()
         {
+            base.LoadConfig();
             Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
             _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
             Config.WriteObject(_pluginConfig);
@@ -77,7 +77,7 @@ namespace Oxide.Plugins
             config.PanelSettings = new PanelRegistration
             {
                 BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#FFF2DF08",
-                Dock = config.PanelSettings?.Dock ?? "right",
+                Dock = config.PanelSettings?.Dock ?? "centerupper",
                 Order = config.PanelSettings?.Order ?? 10,
                 Width = config.PanelSettings?.Width ?? 0.08f
             };
@@ -86,6 +86,12 @@ namespace Oxide.Plugins
 
         private void OnServerInitialized()
         {
+            if (WipeInfo == null)
+            {
+                PrintError("Missing plugin dependency WipeInfo: https://github.com/dassjosh/MagicPanel");
+                return;
+            }
+            
             OnWipeCalculated();
         }
         
@@ -93,7 +99,7 @@ namespace Oxide.Plugins
         {
             timer.In(1f, () =>
             {
-                _daysTillWipe = LastWipe.Call<int>("DaysTillWipe");
+                _daysTillWipe = WipeInfo.Call<int>("DaysTillWipe");
                 MagicPanel?.Call("UpdatePanel", Name, UpdateEnum.Text);
                 RegisterPanels();
             });

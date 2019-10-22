@@ -4,7 +4,7 @@ using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("Images Panel", "MJSU", "0.0.3")]
+    [Info("Images Panel", "MJSU", "0.0.4")]
     [Description("Displays images in Magic Panel")]
     internal class ImagesPanel : RustPlugin
     {
@@ -18,18 +18,14 @@ namespace Oxide.Plugins
         #endregion
 
         #region Setup & Loading
-        private void Init()
-        {
-            ConfigLoad();
-        }
-
         protected override void LoadDefaultConfig()
         {
             PrintWarning("Loading Default Config");
         }
 
-        private void ConfigLoad()
+        protected override void LoadConfig()
         {
+            base.LoadConfig();
             Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
             _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
             Config.WriteObject(_pluginConfig);

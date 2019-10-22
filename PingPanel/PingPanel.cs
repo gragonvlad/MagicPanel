@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Ping Panel", "MJSU", "0.0.3")]
+    [Info("Ping Panel", "MJSU", "0.0.4")]
     [Description("Displays players ping in magic panel")]
     internal class PingPanel : RustPlugin
     {
@@ -27,7 +27,6 @@ namespace Oxide.Plugins
         private void Init()
         {
             _ins = this;
-            ConfigLoad();
             _text = _pluginConfig.Panel.Text.Text;
         }
 
@@ -36,8 +35,9 @@ namespace Oxide.Plugins
             PrintWarning("Loading Default Config");
         }
 
-        private void ConfigLoad()
+        protected override void LoadConfig()
         {
+            base.LoadConfig();
             Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
             _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
             Config.WriteObject(_pluginConfig);
@@ -73,7 +73,7 @@ namespace Oxide.Plugins
                 BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#FFF2DF08",
                 Dock = config.PanelSettings?.Dock ?? "lefttop",
                 Order = config.PanelSettings?.Order ?? 5,
-                Width = config.PanelSettings?.Width ?? 0.05f
+                Width = config.PanelSettings?.Width ?? 0.055f
             };
             return config;
         }

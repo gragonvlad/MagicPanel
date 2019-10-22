@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Radiation Info Panel", "MJSU", "0.0.3")]
+    [Info("Radiation Info Panel", "MJSU", "0.0.4")]
     [Description("Displays how much radiation protection the player has verse how much they need")]
     internal class RadiationInfoPanel : RustPlugin
     {
@@ -70,7 +70,7 @@ namespace Oxide.Plugins
             config.PanelSettings = new PanelRegistration
             {
                 BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#FFF2DF08",
-                Dock = config.PanelSettings?.Dock ?? "right",
+                Dock = config.PanelSettings?.Dock ?? "centerupper",
                 Order = config.PanelSettings?.Order ?? 12,
                 Width = config.PanelSettings?.Width ?? 0.06f
             };

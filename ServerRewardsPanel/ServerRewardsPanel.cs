@@ -1,11 +1,12 @@
-﻿using Newtonsoft.Json;
+﻿using System.ComponentModel;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Oxide.Core.Plugins;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Server Rewards Panel", "MJSU", "0.0.3")]
+    [Info("Server Rewards Panel", "MJSU", "0.0.4")]
     [Description("Displays player server rewards data in MagicPanel")]
     internal class ServerRewardsPanel : RustPlugin
     {
@@ -24,7 +25,6 @@ namespace Oxide.Plugins
         private void Init()
         {
             _ins = this;
-            ConfigLoad();
             _textFormat = _pluginConfig.Panel.Text.Text;
         }
 
@@ -33,8 +33,9 @@ namespace Oxide.Plugins
             PrintWarning("Loading Default Config");
         }
 
-        private void ConfigLoad()
+        protected override void LoadConfig()
         {
+            base.LoadConfig();
             Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
             _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
             Config.WriteObject(_pluginConfig);
@@ -193,7 +194,8 @@ namespace Oxide.Plugins
         #region Classes
         private class PluginConfig
         {
-            [JsonProperty(PropertyName = "Panel Update Rate")]
+            [DefaultValue(5f)]
+            [JsonProperty(PropertyName = "Panel Update Rate (Seconds)")]
             public float UpdateRate { get; set; }
             
             [JsonProperty(PropertyName = "Panel Settings")]

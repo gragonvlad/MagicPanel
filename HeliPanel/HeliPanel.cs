@@ -9,12 +9,12 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Heli Panel", "MJSU", "0.0.3")]
+    [Info("Heli Panel", "MJSU", "0.0.4")]
     [Description("Displays if the helicopter event is active")]
     internal class HeliPanel : RustPlugin
     {
         #region Class Fields
-        [PluginReference] private readonly Plugin MagicPanel, HeliCapture;
+        [PluginReference] private readonly Plugin MagicPanel;
 
         private PluginConfig _pluginConfig; //Plugin Config
         private List<BaseHelicopter> _activeHelis = new List<BaseHelicopter>();
@@ -24,18 +24,14 @@ namespace Oxide.Plugins
         #endregion
 
         #region Setup & Loading
-        private void Init()
-        {
-            ConfigLoad();
-        }
-
         protected override void LoadDefaultConfig()
         {
             PrintWarning("Loading Default Config");
         }
 
-        private void ConfigLoad()
+        protected override void LoadConfig()
         {
+            base.LoadConfig();
             Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
             _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
             Config.WriteObject(_pluginConfig);
@@ -58,7 +54,7 @@ namespace Oxide.Plugins
             config.PanelSettings = new PanelRegistration
             {
                 BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#FFF2DF08",
-                Dock = config.PanelSettings?.Dock ?? "right",
+                Dock = config.PanelSettings?.Dock ?? "center",
                 Order = config.PanelSettings?.Order ?? 3,
                 Width = config.PanelSettings?.Width ?? 0.02f
             };
@@ -128,11 +124,6 @@ namespace Oxide.Plugins
             }
 
             return true;
-        }
-        
-        private bool IsHeliCapture(BaseHelicopter heli)
-        {
-            return HeliCapture?.Call<bool>("IsHeliCaptureHelicopter", heli) ?? false;
         }
 
         private string GetPanel()

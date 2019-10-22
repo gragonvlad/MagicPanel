@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Fps Panel", "MJSU", "0.0.3")]
+    [Info("Fps Panel", "MJSU", "0.0.4")]
     [Description("Displays the server fps in magic panel")]
     internal class FpsPanel : RustPlugin
     {
@@ -22,7 +22,6 @@ namespace Oxide.Plugins
         #region Setup & Loading
         private void Init()
         {
-            ConfigLoad();
             _fpsText = _pluginConfig.Panel.Text.Text;
         }
 
@@ -31,8 +30,9 @@ namespace Oxide.Plugins
             PrintWarning("Loading Default Config");
         }
 
-        private void ConfigLoad()
+        protected override void LoadConfig()
         {
+            base.LoadConfig();
             Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
             _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
             Config.WriteObject(_pluginConfig);
