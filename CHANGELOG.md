@@ -1,3 +1,18 @@
+## Version 0.0.4
+MagicPanel -> Added ImageLibrary support  
+MagicPanel -> Fixed Right align calculation not including right dock padding  
+MagicPanel -> If hex color is invalid default to black  
+MagicPanel -> Made chat command configurable  
+ServerRewardsPanel -> Fixed default Update Rate being 0  
+RadiationPanel -> Fixed panel not displaying inactive when leaving a radiation zone  
+JoiningPanel -> Fixed displaying queue count and not joining count  
+WipePanel -> Use renamed WipeInfo plugin  
+WipePanel -> Display error if WipeInfo is null  
+WipeInfo -> Renamed from LastWipe  
+All Panels -> Use new config loading  
+All Panels -> Changed some default dock names and panels default docks  
+
+
 ## Version 0.0.3
 
 MagicPanel -> Updated Dock Padding to use TypePadding. Padding can now be applied to Left, Right, Top, Bottom of the dock  
