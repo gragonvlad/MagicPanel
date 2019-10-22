@@ -48,3 +48,8 @@ The LastWipe plugin is required in order to use this panel.
   }
 }
  ```
+
+### Date Format
+To learn how you can configure the displayed date in the panel please checkout the link below:
+
+[Formatting the display date](https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings)

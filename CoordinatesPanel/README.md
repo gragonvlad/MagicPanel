@@ -1,7 +1,7 @@
 # Coordinates Panel
 
 ## About
-Displays the players current position
+Displays the players current x y z position
 
 ## Configuration
  
@@ -44,5 +44,14 @@ Displays the players current position
       }
     }
   }
-}}
+}
  ```
+
+### Configuration Options
+`Update Rate (Seconds)` How often the panel should update the players position in seconds
+
+You can customize which of the x y z positions are show by changing the Text value.
+- For x you need to have `{0}`
+- For y you need to have `{1}`
+- For z you need to have `{2}`
+    - If you wish to format the value add a `:0` after the number like `{0:0}`

@@ -42,3 +42,9 @@ Displays Messages
   }
 }
  ```
+
+### Configuration Options
+`Update Rate (Seconds)` How often the panel should change the message in seconds
+
+`MessagePanel_1` is the name used for the panel. 
+Adding more will allow you to add more message panels

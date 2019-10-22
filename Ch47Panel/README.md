@@ -33,3 +33,17 @@ Change the color of the Ch47 icon when the Ch47 Event is active
   }
 }
  ```
+
+## API Hook
+
+This hooks is to be used by other plugins that modify 
+the ch47 heli and don't want the ch47 heli panel 
+to toggle
+
+```c#
+//Name - name of the panel (ex. Ch47Panel)
+//heli - ch47 heli that caused the show
+//return true to allow the ch47 panel to go active for this CH47Helicopter
+//return false to not allow the ch47 ship panel to go active for this CH47Helicopter
+object MagicPanelCanShow(string name, CH47Helicopter heli)
+```

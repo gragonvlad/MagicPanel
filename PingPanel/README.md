@@ -46,3 +46,6 @@ Displays the current ping for the player
   }
 }
  ```
+
+### Configuration Options
+`Update Rate (Seconds)` How often the panel should update the players ping in seconds

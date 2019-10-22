@@ -7,7 +7,7 @@ Displays the players current server rewards balance
  
  ```json
 {
-  "Panel Update Rate": 0.0,
+  "Panel Update Rate": 5.0,
   "Panel Settings": {
     "Dock": "leftmiddle",
     "Width": 0.0625,
@@ -46,3 +46,6 @@ Displays the players current server rewards balance
   }
 }
  ```
+
+### Configuration Options
+`Update Rate (Seconds)` How often the panel should update the players server rewards in seconds

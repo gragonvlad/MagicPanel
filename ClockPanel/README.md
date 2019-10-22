@@ -47,4 +47,6 @@ Displays the current in game time
  ```
 
 ### Time Format
+To learn how you can configure the displayed time in the panel please checkout the link below:
+
 [Formatting the display time](https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings)

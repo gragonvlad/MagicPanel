@@ -46,3 +46,11 @@ Displays the current in local time for the server
   }
 }
  ```
+
+### Configuration Options
+`Update Rate (Seconds)` How often the panel should update the servers local time in seconds
+
+### Time Format
+To learn how you can configure the displayed time in the panel please checkout the link below:
+
+[Formatting the display time](https://docs.microsoft.com/en-us/dotnet/standard/base-types/custom-date-and-time-format-strings)

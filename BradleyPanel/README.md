@@ -33,3 +33,17 @@ Change the color of the Bradley icon when the Bradley is active
   }
 }
  ```
+
+## API Hook
+
+This hooks is to be used by other plugins that modify 
+the bradley and don't want the bradley panel 
+to toggle
+
+```c#
+//Name - name of the panel (ex. BradleyPanel)
+//bradley - bradley that caused the show
+//return true to allow the bradley panel to go active for this BradleyAPC
+//return false to not allow the bradley panel to go active for this BradleyAPC
+object MagicPanelCanShow(string name, BradleyAPC bradley)
+```

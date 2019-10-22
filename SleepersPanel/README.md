@@ -45,5 +45,3 @@ Displays the current sleeper count
   }
 }
  ```
-
-### Time Format

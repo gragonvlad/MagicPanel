@@ -47,5 +47,6 @@ Displays how much longer the player is considered hostile
 }
  ```
 
-### Show hide panel
-    If false will always display the panel to the player. If true the panel will be shown when the player is hostile
+### Configuration Options
+`Show hide panel` if false the panel will always be shown 
+if true the panel will only be shown when the player is hostile

@@ -33,3 +33,17 @@ Change the color of the Cargo Ship icon when the Cargo Ship is active
   }
 }
  ```
+
+## API Hook
+
+This hooks is to be used by other plugins that modify 
+the cargo ship and don't want the cargo ship panel 
+to toggle
+
+```c#
+//Name - name of the panel (ex. CargoShipPanel)
+//cargo - cargo ship that caused the show
+//return true to allow the cargo ship panel to go active for this CargoShip
+//return false to not allow the cargo ship panel to go active for this CargoShip
+object MagicPanelCanShow(string name, CargoShip cargo)
+```

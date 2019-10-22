@@ -46,3 +46,6 @@ Displays the current radiation protection for the player verses how much protect
   }
 }
  ```
+
+### Configuration Options
+`Update Rate (Seconds)` How often the panel should update the players radiation in seconds

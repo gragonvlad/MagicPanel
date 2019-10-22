@@ -34,3 +34,17 @@ It will not toggle for PlaneCrash or Airstrike plugins
   }
 }
  ```
+
+## API Hook
+
+This hooks is to be used by other plugins that modify 
+a cargo plane and don't want the airdrop panel 
+to toggle
+
+```c#
+//Name - name of the panel (ex. AirdropPanel)
+//plane - plane that caused the show
+//return true to allow the airdrop panel to go active for this CargoPlane
+//return false to not allow the airdrop panel to go active for this CargoPlane
+object MagicPanelCanShow(string name, CargoPlane plane)
+```

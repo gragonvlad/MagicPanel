@@ -46,3 +46,5 @@ Displays the current queue count
   "Update Rates (Seconds)": 5.0
 }
  ```
+### Configuration Options
+`Update Rate (Seconds)` How often the panel should update the server queue in seconds

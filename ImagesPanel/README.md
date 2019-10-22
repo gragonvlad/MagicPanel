@@ -57,3 +57,7 @@ Displays images
   }
 }
  ```
+
+### Configuration Options
+`ImagesPanel_1` & `ImagesPanel_2` are the names used for the panel. 
+Adding more will allow you to add more image panels

@@ -46,3 +46,5 @@ Displays how many players a currently joining
   "Update Rates (Seconds)": 5.0
 }
  ```
+
+### Configuration Options

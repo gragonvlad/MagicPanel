@@ -46,3 +46,6 @@ Displays the current server fps
   }
 }
  ```
+
+### Configuration Options
+`Update Rate (Seconds)` How often the panel should update the server fps in seconds

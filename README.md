@@ -6,7 +6,7 @@ This repository is for testing Magic Panel and the associated panels before goin
 ## About
 Magic Panel is a 100% API driven panel display plugin for rust. 
 Each panel is a separate plugin that will register how that panel will function.
-Panels dynamically position themselves within a dock based on the dock assigned to and the order specified.
+Panels dynamically position themselves within a dock based on the dock assigned and the order specified.
 
 ## Configuration
 
@@ -120,9 +120,9 @@ Panels dynamically position themselves within a dock based on the dock assigned 
 }
 ``` 
 
-### Dock Configuration Breakdown
+### Configuration Options
 
-```json
+```
 "lefttop": { // Name of the Dock
   "Position": {
     "X Position": 0.07, //X start position of the Dock
@@ -138,9 +138,26 @@ Panels dynamically position themselves within a dock based on the dock assigned 
 ```
 
 #### Panel Alignment
-Left: The x Position will be the left position for the dock
-Center: The x Position will be the the middle of the dock
-Right: The x Position will be the right position for the dock (The order of the panel will be revesered with the right most panel being the lowest order value)
+- Left: The x Position will be the left position for the dock  
+- Center: The x Position will be the the middle of the dock  
+- Right: The x Position will be the right position for the dock
+    - The order of the panel will be reversed with the right most panel being the lowest order value
+
+## Chat Commands
+* `/mp` - shows the magic panel help text  
+* `/mp off`- hides all panels for the player  
+* `/mp on` - shows all panels to the player
+
+## Localization
+```json
+{
+  "Chat": "<color=#bebebe>[<color=#de8732>Magic Panel</color>] {0}</color>",
+  "On": "on",
+  "Off": "off",
+  "SettingsChanged": "All your panels are now {0}",
+  "Help": "Controls the visibility of the magic panels:\n<color=#de8732>/mp on</color> shows all the magic panels\n<color=#de8732>/mp off</color> hides all the magic panels"
+}
+```
 
 ## API
 
@@ -153,7 +170,7 @@ These classes are used when sending information to Magic Panel and should be add
 #### Registration for the API
 JSON serialized and sent to Magic Panel.
 This tells Magic Panel information about the panel itself
-```csharp
+```c#
 private class PanelRegistration
 {
     public string Dock { get; set; }
@@ -163,9 +180,9 @@ private class PanelRegistration
 }
 ```
 
-#### Panel Data
+#### Panel Class
 This contains all the information how to build out the specific panel and contains the image and text information
-```csharp
+```c#
 private class Panel
 {
     public PanelImage Image { get; set; }
@@ -173,9 +190,9 @@ private class Panel
 }
 ```
 
-#### Base Class for Panels data
+#### Base Panel Class
 This contains the basic information for each image and text
-```csharp
+```c#
 private abstract class PanelType
 {
     public string Color { get; set; }
@@ -185,18 +202,18 @@ private abstract class PanelType
 }
 ```
 
-#### Image Panel data
+#### Image Panel Class
 Tells Magic Panel how to display the image
-```csharp
+```c#
 private class PanelImage : PanelType
 {
     public string Url { get; set; }
 }
 ```
 
-#### Text Panel data
+#### Text Panel Class
 Tells magic panel how to display the text
-```csharp
+```c#
 private class PanelText : PanelType
 {
     public string Text { get; set; }
@@ -209,21 +226,13 @@ private class PanelText : PanelType
 
 #### Type Padding
 Applies padding to different parts of the panel
-```csharp
+```c#
 private class TypePadding
 {
     public float Left { get; set; }
     public float Right { get; set; }
     public float Top { get; set; }
     public float Bottom { get; set; }
-
-    public TypePadding()
-    {
-        Left = 0;
-        Right = 0;
-        Top = 0;
-        Bottom = 0;
-    }
 
     public TypePadding(float left, float right, float top, float bottom)
     {
@@ -237,41 +246,81 @@ private class TypePadding
 
 #### Update Enum
 Passed into Magic Panel when updating telling it which panels should be updated
-```csharp
-enum UpdateEnum { All, Panel, Image, Text }
+```c#
+enum UpdateEnum { All = 1, Panel = 2, Image = 3, Text = 4 }
 ```
 
 ### Hooks
 
 #### Register Player Panel
 Registers a Player panel in Magic Panel
-```csharp
-RegisterPlayerPanel(Plugin plugin, //Plugin Registering a Panel
-string name, //Name of the panel
-string panelData,  // JSON serialized PanelRegistration class
-string getMethodName) //The Hook to call in the plugin to get the panel updates
+```c#
+//plugin - plugin registering the panel
+//name - name of the panel (typically he name of the plugin)
+//panelData - JSON serialized PanelRegistration class
+//getMethodName- The Hook to call in the plugin to get the panel updates
+void RegisterPlayerPanel(Plugin plugin, string name, string panelData, string getMethodName)
 ```
 
 #### Register Global Panel
 Registers a Global Panel in Magic Panel
-```csharp
-RegisterGlobalPanel(Plugin plugin, //Plugin Registering a Panel
-string name, //Name of the panel
-string panelData,  // JSON serialized PanelRegistration class
-string getMethodName) //The Hook to call in the plugin to get the panel updates
+```c#
+//plugin - plugin registering the panel
+//name - name of the panel (typically he name of the plugin)
+//panelData - JSON serialized PanelRegistration class
+//getMethodName- The Hook to call in the plugin to get the panel updates
+void RegisterGlobalPanel(Plugin plugin, string name, string panelData, string getMethodName)
 ```
 
 #### Update Global Panel
 Tells Magic Panel to update the specified global panel
-```csharp
-UpdatePanel(string panelName, //Panel to update
-int update //int of the UpdateEnum to update)
+```c#
+//panelName - Panel to update
+//update - int of the UpdateEnum to update
+void UpdatePanel(string panelName, int update)
 ```
 
 #### Update Player Panel
 Tells Magic Panel to update the specified global panel
-```csharp
-UpdatePanel(BasePlayer player, //Player to update the panel for
-string panelName, //Panel to update
-int update //int of the UpdateEnum to update)
+```c#
+//player - Player to update the panel for
+//panelName - Name of the panel to update
+//update - int of the UpdateEnum to update
+void UpdatePanel(BasePlayer player, string panelName, int update)
 ```
+
+#### Show Panel
+Show a hidden global panel
+```c#
+//name - name of the hidden panel to show
+void ShowPanel(string name)
+```
+
+#### Show Panel
+Show a hidden player panel
+```c#
+//name - name of the hidden panel to show
+//player - player to unhide the panel for)
+void ShowPanel(string name, BasePlayer player)
+```
+
+#### Hide Panel
+Hides a global panel
+```c#
+//name - name of the panel to hide
+void HidePanel(string name)
+```
+
+#### Hide Panel
+Hides a player panel
+```c#
+//name - name of the panel to hide
+//player - layer to hide the panel for
+void HidePanel(string name, BasePlayer player )
+```
+
+## Testers
+I want to thank all the testers who assisted with testing this plugin and associated panels
+* Bull
+* Supreme
+* Trey
