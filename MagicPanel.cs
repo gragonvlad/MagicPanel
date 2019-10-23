@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Magic Panel", "MJSU", "0.0.4")]
+    [Info("Magic Panel", "MJSU", "0.0.5")]
     [Description("Displays information to the players on their hud.")]
     internal class MagicPanel : RustPlugin
     {
@@ -170,6 +170,20 @@ namespace Oxide.Plugins
                         XPos = .4966f,
                         StartYPos = 0.0f,
                         Height = 0.0235f
+                    },
+                    DockPadding = new TypePadding(0.001f, 0.001f, 0, 0),
+                    PanelPadding = 0.004f
+                },
+                ["undercompass"] = new DockData
+                {
+                    BackgroundColor = "#00000000",
+                    Enabled = true,
+                    Alignment = PanelAlignEnum.Center,
+                    Position = new DockPosition
+                    {
+                        XPos = .4966f,
+                        StartYPos = 0.92f,
+                        Height = 0.035f
                     },
                     DockPadding = new TypePadding(0.001f, 0.001f, 0, 0),
                     PanelPadding = 0.004f
@@ -387,7 +401,7 @@ namespace Oxide.Plugins
                     startX -= panel.Width + dock.PanelPadding;
                 }
                 
-                startX -= leftOffset + rightOffSet;
+                startX -= leftOffset - rightOffSet;
                 dockPanels = dockPanels.OrderByDescending(p => p.Order).ToList();
             }
             else if (align == PanelAlignEnum.Center)
@@ -435,8 +449,9 @@ namespace Oxide.Plugins
             {
                 return;
             }
-            
-            if (_hiddenPanels[panelName].All || _hiddenPanels[panelName].PlayerHidden.Contains(player.userID))
+
+            HiddenPanelInfo hidden = _hiddenPanels[panelName];
+            if (hidden.All || hidden.PlayerHidden.Contains(player.userID))
             {
                 return;
             }
@@ -995,14 +1010,17 @@ namespace Oxide.Plugins
 
             public static void Image(ref CuiElementContainer container, string png, string color, UiPosition pos)
             {
+                uint value;
+                bool isPng = uint.TryParse(png, out value);
+
                 container.Add(new CuiElement
                 {
                     Name = CuiHelper.GetGuid(),
                     Parent = UiPanel,
                     Components =
                     {
-                        new CuiRawImageComponent {Color = color, Png = !png?.StartsWith("http") ?? false ? png : null, Url = png?.StartsWith("http") ?? false ? png : null},
-                        new CuiRectTransformComponent {AnchorMin = pos.GetMin(), AnchorMax = pos.GetMax() }
+                        new CuiRawImageComponent { Color = color, Png = isPng ? png : null, Url = !isPng ? png : null },
+                        new CuiRectTransformComponent { AnchorMin = pos.GetMin(), AnchorMax = pos.GetMax() }
                     }
                 });
             }

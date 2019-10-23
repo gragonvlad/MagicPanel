@@ -1,3 +1,10 @@
+## Version 0.0.5
+DeathNotesPanel -> New Panel  
+WipePanel -> Uses renamed WipeInfo -> WipeInfoApi  
+WipeInfo -> Renamed to WipeInfoApi  
+MagicPanel -> Protections to prevent invalid images from being attempted to be used  
+MagicPanel -> Added new dock for DeathNotesPanel  
+
 ## Version 0.0.4
 MagicPanel -> Added ImageLibrary support  
 MagicPanel -> Fixed Right align calculation not including right dock padding  
