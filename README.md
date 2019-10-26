@@ -223,6 +223,15 @@ private class Panel
 {
     public PanelImage Image { get; set; }
     public PanelText Text { get; set; }
+    
+    public Hash<string, object> ToHash()
+    {
+        return new Hash<string, object>
+        {
+            [nameof(Image)] = Image.ToHash(),
+            [nameof(Text)] = Text.ToHash()
+        };
+    }
 }
 ```
 
@@ -231,10 +240,23 @@ This contains the basic information for each image and text
 ```c#
 private abstract class PanelType
 {
+    public bool Enabled { get; set; }
     public string Color { get; set; }
     public int Order { get; set; }
     public float Width { get; set; }
-    public TypePadding Padding { get; set; } = new TypePadding();
+    public TypePadding Padding { get; set; }
+    
+    public virtual Hash<string, object> ToHash()
+    {
+        return new Hash<string, object>
+        {
+            [nameof(Enabled)] = Enabled,
+            [nameof(Color)] = Color,
+            [nameof(Order)] = Order,
+            [nameof(Width)] = Width,
+            [nameof(Padding)] = Padding.ToHash(),
+        };
+    }
 }
 ```
 
@@ -244,6 +266,13 @@ Tells Magic Panel how to display the image
 private class PanelImage : PanelType
 {
     public string Url { get; set; }
+    
+    public override Hash<string, object> ToHash()
+    {
+        Hash<string, object> hash = base.ToHash();
+        hash[nameof(Url)] = Url;
+        return hash;
+    }
 }
 ```
 
@@ -257,6 +286,15 @@ private class PanelText : PanelType
 
     [JsonConverter(typeof(StringEnumConverter))]
     public TextAnchor TextAnchor { get; set; }
+    
+    public override Hash<string, object> ToHash()
+    {
+        Hash<string, object> hash = base.ToHash();
+        hash[nameof(Text)] = Text;
+        hash[nameof(FontSize)] = FontSize;
+        hash[nameof(TextAnchor)] = TextAnchor;
+        return hash;
+    }
 }
 ```
 
@@ -276,6 +314,17 @@ private class TypePadding
         Right = right;
         Top = top;
         Bottom = bottom;
+    }
+    
+    public Hash<string, object> ToHash()
+    {
+        return new Hash<string, object>
+        {
+            [nameof(Left)] = Left,
+            [nameof(Right)] = Right,
+            [nameof(Top)] = Top,
+            [nameof(Bottom)] = Bottom
+        };
     }
 }
 ```
