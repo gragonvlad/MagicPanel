@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Magic Panel", "MJSU", "0.0.5")]
+    [Info("Magic Panel", "MJSU", "0.0.6")]
     [Description("Displays information to the players on their hud.")]
     internal class MagicPanel : RustPlugin
     {
@@ -295,6 +295,10 @@ namespace Oxide.Plugins
         private void OnPlayerDisconnected(BasePlayer player, string reason)
         {
             DestroyAllUi(player);
+            foreach (HiddenPanelInfo info in _hiddenPanels.Values)
+            {
+                info.PlayerHidden.Remove(player.userID);
+            }
         }
         #endregion
 
@@ -377,10 +381,8 @@ namespace Oxide.Plugins
                 panelPositions = new Hash<string, float>();
                 _panelPositions[dockName] = panelPositions;
             }
-            else
-            {
-                panelPositions.Clear();
-            }
+            
+            panelPositions.Clear();
 
             PanelAlignEnum align = _pluginConfig.Docks[dockName].Alignment;
             DockData dock = _pluginConfig.Docks[dockName];
@@ -401,7 +403,7 @@ namespace Oxide.Plugins
                     startX -= panel.Width + dock.PanelPadding;
                 }
                 
-                startX -= leftOffset - rightOffSet;
+                startX -= leftOffset + rightOffSet;
                 dockPanels = dockPanels.OrderByDescending(p => p.Order).ToList();
             }
             else if (align == PanelAlignEnum.Center)
@@ -463,7 +465,7 @@ namespace Oxide.Plugins
         }
         #endregion
 
-        #region Panel Show / Hide
+        #region Panel Show / Hide API
         private void ShowPanel(string name)
         {
             if (!_hiddenPanels[name].All)
@@ -524,7 +526,7 @@ namespace Oxide.Plugins
                 foreach (KeyValuePair<string, DockData> dock in _pluginConfig.Docks.Where(d => d.Value.Enabled))
                 {
                     string dockName = GetDockUiName(dock.Key);
-                    CuiElementContainer container = Ui.Container(Ui.Color(dock.Value.BackgroundColor), GetDockUiPosition(dock.Value.Position, dock.Key), false, dockName);
+                    CuiElementContainer container = Ui.Container(Ui.Color(dock.Value.BackgroundColor), GetDockUiPosition(dock.Value.Position, dock.Key), dockName);
                     CuiHelper.DestroyUi(player, dockName);
                     CuiHelper.AddUi(player, container);
                 }
@@ -538,48 +540,50 @@ namespace Oxide.Plugins
                 return;
             }
 
-            PanelCreator creator = new PanelCreator
+            players = players
+                .Where(p => _storedData.Settings[p.userID]?.Enabled ?? true)
+                .ToList();
+            
+            if (players.Count == 0)
+            {
+                return;
+            }
+
+            PanelSetup setup = new PanelSetup
             {
                 Pos = _pluginConfig.Docks[registeredPanel.Dock].Position,
                 PanelColor = Ui.Color(registeredPanel.BackgroundColor),
                 StartPos = _panelPositions[registeredPanel.Dock][registeredPanel.Name],
-                UiPanelName = GetPanelUiName(registeredPanel.Name),
+                UiParentPanel = GetPanelUiName(registeredPanel.Name),
                 PanelReg = registeredPanel,
             };
             
             if (registeredPanel.PanelType == PanelTypeEnum.Global)
             {
-                DrawGlobalPanel(players, creator, updateEnum);
+                DrawGlobalPanel(players, setup, updateEnum);
             }
             else if (registeredPanel.PanelType == PanelTypeEnum.Player)
             {
-                DrawPlayersPanel(players, creator, updateEnum);
+                DrawPlayersPanel(players, setup, updateEnum);
             }
         }
 
-        private void DrawGlobalPanel(List<BasePlayer> players, PanelCreator creator, UpdateEnum updateEnum)
+        private void DrawGlobalPanel(List<BasePlayer> players, PanelSetup setup, UpdateEnum updateEnum)
         {
-            PanelRegistration reg = creator.PanelReg;
+            PanelRegistration reg = setup.PanelReg;
 
-            string panelData = reg.Plugin.Call<string>(reg.GetPanelMethod, reg.Name);
-            if (string.IsNullOrEmpty(panelData))
+            Hash<string, object> panelData = reg.Plugin.Call<Hash<string, object>>(reg.GetPanelMethod, reg.Name);
+            if (panelData == null)
             {
                 PrintError($"DrawGlobalPanel: {reg.Plugin.Name} returned no data from {reg.GetPanelMethod} method");
                 return;
             }
             
-            Panel panel = JsonConvert.DeserializeObject<Panel>(panelData);
-            List<PanelUpdate> containers = CreatePanel(panel, creator, updateEnum);
-            
+            Panel panel = new Panel(panelData);
+            List<PanelUpdate> containers = CreatePanel(panel, setup, updateEnum);
+            HiddenPanelInfo info = _hiddenPanels[setup.PanelReg.Name];
             foreach (BasePlayer player in players)
             {
-                PlayerSettings settings = _storedData.Settings[player.userID];
-                if (settings != null && !settings.Enabled)
-                {
-                    continue;
-                }
-
-                HiddenPanelInfo info = _hiddenPanels[creator.PanelReg.Name];
                 foreach (PanelUpdate update in containers)
                 {
                     CuiHelper.DestroyUi(player, update.PanelName);
@@ -591,27 +595,21 @@ namespace Oxide.Plugins
             }
         }
 
-        private void DrawPlayersPanel(List<BasePlayer> players, PanelCreator creator, UpdateEnum updateEnum)
+        private void DrawPlayersPanel(List<BasePlayer> players, PanelSetup setup, UpdateEnum updateEnum)
         {
             foreach (BasePlayer player in players)
             {
-                PlayerSettings settings = _storedData.Settings[player.userID];
-                if (settings != null && !settings.Enabled)
-                {
-                    continue;
-                }
-
-                PanelRegistration reg = creator.PanelReg;
-                string panelData = reg.Plugin.Call<string>(reg.GetPanelMethod, player, reg.Name);
-                if (string.IsNullOrEmpty(panelData))
+                PanelRegistration reg = setup.PanelReg;
+                Hash<string, object> panelData = reg.Plugin.Call<Hash<string, object>>(reg.GetPanelMethod, player, reg.Name);
+                if (panelData == null)
                 {
                     PrintError($"DrawPlayersPanel: {reg.Plugin.Name} returned no data from {reg.GetPanelMethod} method");
                     return;
                 }
-                
-                Panel panel = JsonConvert.DeserializeObject<Panel>(panelData);
-                HiddenPanelInfo info = _hiddenPanels[creator.PanelReg.Name];
-                foreach (PanelUpdate update in CreatePanel(panel, creator, updateEnum))
+
+                Panel panel = new Panel(panelData);
+                HiddenPanelInfo info = _hiddenPanels[setup.PanelReg.Name];
+                foreach (PanelUpdate update in CreatePanel(panel, setup, updateEnum))
                 {
                     CuiHelper.DestroyUi(player, update.PanelName);
                     
@@ -623,19 +621,19 @@ namespace Oxide.Plugins
             }
         }
 
-        private List<PanelUpdate> CreatePanel(Panel panel, PanelCreator creator, UpdateEnum update)
+        private List<PanelUpdate> CreatePanel(Panel panel, PanelSetup setup, UpdateEnum update)
         {
             List<PanelUpdate> containers = new List<PanelUpdate>();
-            TypePadding dockPadding = _pluginConfig.Docks[creator.PanelReg.Dock]?.DockPadding;
-
+            
             if (update == UpdateEnum.All || update == UpdateEnum.Panel)
             {
-                UiPosition pos = GetPaddedPanelPosition(creator, dockPadding);
-                CuiElementContainer container = Ui.Container(creator.PanelColor, pos, false, creator.UiPanelName);
+                TypePadding dockPadding = _pluginConfig.Docks[setup.PanelReg.Dock].DockPadding;
+                UiPosition pos = GetPanelPosition(setup, dockPadding);
+                CuiElementContainer container = Ui.Container(setup.PanelColor, pos, setup.UiParentPanel);
                 containers.Add(new PanelUpdate
                 {
                     Container = container,
-                    PanelName = creator.UiPanelName
+                    PanelName = setup.UiParentPanel
                 });
             }
 
@@ -649,24 +647,22 @@ namespace Oxide.Plugins
             {
                 panelTypes.Add(panel.Image);
             }
-
-            panelTypes = panelTypes.OrderBy(pt => pt.Order).ToList();
-
+            
             float offset = 0;
-            foreach (PanelType type in panelTypes.Where(pt => pt.Enabled))
+            foreach (PanelType type in panelTypes.Where(pt => pt.Enabled).OrderBy(pt => pt.Order))
             {
                 if (type is PanelText)
                 {
                     if (update == UpdateEnum.All || update == UpdateEnum.Text)
                     {
-                        containers.Add(CreateText(panel, creator.UiPanelName, offset, dockPadding));
+                        containers.Add(CreateText(panel, setup.UiParentPanel, offset));
                     }
                 }
                 else if (type is PanelImage)
                 {
                     if (update == UpdateEnum.All || update == UpdateEnum.Image)
                     {
-                        containers.Add(CreateImage(panel, creator.UiPanelName, offset, dockPadding));
+                        containers.Add(CreateImage(panel, setup.UiParentPanel, offset));
                     }
                 }
                 
@@ -676,11 +672,11 @@ namespace Oxide.Plugins
             return containers;
         }
 
-        private PanelUpdate CreateImage(Panel panel, string panelName, float offset, TypePadding dockPadding)
+        private PanelUpdate CreateImage(Panel panel, string panelName, float offset)
         {
             string imageName = GetPanelUiImageName(panelName);
-            UiPosition pos = GetPaddedPosition(offset, panel.Image.Width, panel.Image.Padding, dockPadding);
-            CuiElementContainer container = Ui.Container(_clearColor, pos, false, imageName, panelName);
+            UiPosition pos = GetTypePosition(offset, panel.Image.Width, panel.Image.Padding);
+            CuiElementContainer container = Ui.Container(_clearColor, pos, imageName, panelName);
             Ui.Image(ref container, GetImage(panel.Image.Url) ?? string.Empty, Ui.Color(panel.Image.Color), _fullSize);
             return new PanelUpdate
             {
@@ -689,11 +685,11 @@ namespace Oxide.Plugins
             };
         }
 
-        private PanelUpdate CreateText(Panel panel, string panelName, float offset, TypePadding dockPadding)
+        private PanelUpdate CreateText(Panel panel, string panelName, float offset)
         {
             string textName = GetPanelUiTextName(panelName);
-            UiPosition pos = GetPaddedPosition(offset, panel.Text.Width, panel.Text.Padding, dockPadding);
-            CuiElementContainer container = Ui.Container(_clearColor, pos, false, textName, panelName);
+            UiPosition pos = GetTypePosition(offset, panel.Text.Width, panel.Text.Padding);
+            CuiElementContainer container = Ui.Container(_clearColor, pos, textName, panelName);
             Ui.Label(ref container, panel.Text.Text ?? string.Empty, panel.Text.FontSize, Ui.Color(panel.Text.Color), _fullSize, panel.Text.TextAnchor);
             return new PanelUpdate
             {
@@ -758,7 +754,7 @@ namespace Oxide.Plugins
 
         private string GetPanelUiName(string panelName)
         {
-            return $"{UiPanel}{panelName}";
+            return $"{UiPanelName}_{panelName}";
         }
 
         private string GetPanelUiImageName(string panelName)
@@ -773,24 +769,24 @@ namespace Oxide.Plugins
 
         private string GetDockUiName(string dockName)
         {
-            return $"{UiPanel}_dock_{dockName}";
+            return $"{UiPanelName}_dock_{dockName}";
         }
 
-        private UiPosition GetPaddedPosition(float startPos, float widthPercentage, TypePadding padding, TypePadding dockPadding)
+        private UiPosition GetTypePosition(float startPos, float widthPercentage, TypePadding padding)
         {
-            UiPosition pos = new UiPosition(startPos + padding.Left,
-                padding.Bottom + dockPadding.Bottom,
-                widthPercentage - (padding.Left + padding.Right),
-                1 - (padding.Top + padding.Bottom + dockPadding.Top + dockPadding.Bottom));
+            UiPosition pos = new UiPosition(startPos,
+                padding.Bottom,
+                widthPercentage,
+                1 - (padding.Top + padding.Bottom));
             return pos;
         }
 
-        private UiPosition GetPaddedPanelPosition(PanelCreator creator, TypePadding dockPadding)
+        private UiPosition GetPanelPosition(PanelSetup setup, TypePadding dockPadding)
         {
-           return new UiPosition(creator.StartPos + dockPadding.Left, 
-               creator.Pos.StartYPos + dockPadding.Bottom, 
-               creator.PanelReg.Width - dockPadding.Left - dockPadding.Right, 
-               creator.Pos.Height - dockPadding.Bottom - dockPadding.Top);
+           return new UiPosition(setup.StartPos, 
+               setup.Pos.StartYPos + dockPadding.Bottom,
+               setup.PanelReg.Width, 
+               setup.Pos.Height - (dockPadding.Bottom + dockPadding.Top));
         }
 
         private UiPosition GetDockUiPosition(DockPosition pos, string dockName)
@@ -901,29 +897,63 @@ namespace Oxide.Plugins
 
         private class Panel
         {
-            public PanelImage Image { get; set; }
-            public PanelText Text { get; set; }
+            public PanelImage Image { get; }
+            public PanelText Text { get; }
+            
+            public Panel(Hash<string, object> data)
+            {
+                if (data.ContainsKey(nameof(Image)))
+                {
+                    Image = new PanelImage((Hash<string, object>)data[nameof(Image)]);
+                }
+                
+                if (data.ContainsKey(nameof(Text)))
+                {
+                    Text = new PanelText((Hash<string, object>)data[nameof(Text)]);
+                }
+            }
         }
 
         private abstract class PanelType
         {
-            public bool Enabled { get; set; }
-            public string Color { get; set; }
-            public int Order { get; set; }
-            public float Width { get; set; }
-            public TypePadding Padding { get; set; }
+            public bool Enabled { get; }
+            public string Color { get; }
+            public int Order { get; }
+            public float Width { get; }
+            public TypePadding Padding { get; }
+            
+            protected PanelType(Hash<string, object> data)
+            {
+                Enabled = (bool) data[nameof(Enabled)];
+                Color = (string) data[nameof(Color)];
+                Order = (int) data[nameof(Order)];
+                Width = (float) data[nameof(Width)];
+                Padding = new TypePadding((Hash<string,object>)data[nameof(Padding)]);
+            }
         }
 
         private class PanelImage : PanelType
         {
-            public string Url { get; set; }
+            public string Url { get; }
+            
+            public PanelImage(Hash<string, object> data) : base(data)
+            {
+                Url = (string) data[nameof(Url)];
+            }
         }
 
         private class PanelText : PanelType
         {
-            public string Text { get; set; }
-            public int FontSize { get; set; }
-            public TextAnchor TextAnchor { get; set; }
+            public string Text { get; }
+            public int FontSize { get; }
+            public TextAnchor TextAnchor { get; }
+            
+            public PanelText(Hash<string, object> data) : base(data)
+            {
+                Text = (string) data[nameof(Text)];
+                FontSize = (int) data[nameof(FontSize)];
+                TextAnchor = (TextAnchor) data[nameof(TextAnchor)];
+            }
         }
 
         private class TypePadding
@@ -933,6 +963,17 @@ namespace Oxide.Plugins
             public float Top { get; set; }
             public float Bottom { get; set; }
 
+            [JsonConstructor]
+            public TypePadding() { }
+            
+            public TypePadding(Hash<string, object> data)
+            {
+                Left = (float) data[nameof(Left)];
+                Right = (float) data[nameof(Right)];
+                Top = (float) data[nameof(Top)];
+                Bottom = (float) data[nameof(Bottom)];
+            }
+            
             public TypePadding(float left, float right, float top, float bottom)
             {
                 Left = left;
@@ -942,11 +983,11 @@ namespace Oxide.Plugins
             }
         }
 
-        private class PanelCreator
+        private class PanelSetup
         {
             public DockPosition Pos { get; set; }
             public float StartPos { get; set; }
-            public string UiPanelName { get; set; }
+            public string UiParentPanel { get; set; }
             public string PanelColor { get; set; }
             public PanelRegistration PanelReg { get; set; }
         }
@@ -959,7 +1000,7 @@ namespace Oxide.Plugins
 
         private class HiddenPanelInfo
         {
-            public List<ulong> PlayerHidden { get; set; }
+            public List<ulong> PlayerHidden { get; }
             public bool All { get; set; }
 
             public HiddenPanelInfo()
@@ -971,7 +1012,7 @@ namespace Oxide.Plugins
         #endregion
 
         #region UI
-        private const string UiPanel = "MagicPanel_";
+        private const string UiPanelName = "MagicPanel";
         private readonly string _clearColor = Ui.Color("#00000000");
         private readonly UiPosition _fullSize = new UiPosition(0, 0, 1, 1);
 
@@ -979,7 +1020,7 @@ namespace Oxide.Plugins
         {
             private static string UiPanel { get; set; }
 
-            public static CuiElementContainer Container(string color, UiPosition pos, bool useCursor, string panel, string parent = "Hud")
+            public static CuiElementContainer Container(string color, UiPosition pos, string panel, string parent = "Hud")
             {
                 UiPanel = panel;
                 return new CuiElementContainer
@@ -989,7 +1030,7 @@ namespace Oxide.Plugins
                         {
                             Image = {Color = color},
                             RectTransform = {AnchorMin = pos.GetMin(), AnchorMax = pos.GetMax()},
-                            CursorEnabled = useCursor
+                            CursorEnabled = false
                         },
                         new CuiElement().Parent = parent,
                         panel
@@ -1003,7 +1044,6 @@ namespace Oxide.Plugins
                 {
                     Text = { FontSize = size, Align = align, Text = text, Color = color },
                     RectTransform = { AnchorMin = pos.GetMin(), AnchorMax = pos.GetMax() }
-
                 },
                 UiPanel);
             }

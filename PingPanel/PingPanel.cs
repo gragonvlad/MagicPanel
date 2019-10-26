@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Ping Panel", "MJSU", "0.0.4")]
+    [Info("Ping Panel", "MJSU", "0.0.6")]
     [Description("Displays players ping in magic panel")]
     internal class PingPanel : RustPlugin
     {
@@ -83,7 +83,7 @@ namespace Oxide.Plugins
             RegisterPanels();
             foreach (BasePlayer player in BasePlayer.activePlayerList)
             {
-                AddBehavior(player);
+                OnPlayerInit(player);
             }
         }
 
@@ -118,6 +118,27 @@ namespace Oxide.Plugins
         }
         #endregion
 
+        #region MagicPanel Hook
+        private Hash<string, object> GetPanel(BasePlayer player)
+        {
+            Panel panel = _pluginConfig.Panel;
+            PanelText text = panel.Text;
+            if (text != null)
+            {
+                if (player?.IsValid() ?? false)
+                {
+                    text.Text = string.Format(_text, player.GetComponent<PingBehavior>()?.LastPing ?? -1);
+                }
+                else
+                {
+                    text.Text = string.Format(_text, -1);
+                }
+            }
+
+            return panel.ToHash();
+        }
+        #endregion
+
         #region Helper Methods
 
         private void AddBehavior(BasePlayer player)
@@ -127,25 +148,6 @@ namespace Oxide.Plugins
                 player.gameObject.AddComponent<PingBehavior>();
             }
         }
-
-        private string GetPanel(BasePlayer player)
-        {
-            Panel panel = _pluginConfig.Panel;
-            PanelText text = panel.Text;
-            if (text != null)
-            {
-                if (player != null && player.IsValid())
-                {
-                    text.Text = string.Format(_text, player.GetComponent<PingBehavior>()?.GetPing() ?? 0);
-                }
-                else
-                {
-                    text.Text = string.Format(_text, 0);
-                }
-            }
-
-            return JsonConvert.SerializeObject(panel);
-        }
         #endregion
 
         #region Classes
@@ -153,14 +155,14 @@ namespace Oxide.Plugins
         private class PingBehavior : FacepunchBehaviour
         {
             private BasePlayer Player { get; set; }
-            private int LastPing { get;set; }
+            public int LastPing { get; private set; }
 
             private void Awake()
             {
                 enabled = false;
                 Player = GetComponent<BasePlayer>();
                 LastPing = CheckPing();
-                InvokeRepeating(UpdatePing, _ins._pluginConfig.UpdateRate, _ins._pluginConfig.UpdateRate);
+                InvokeRandomized(UpdatePing, _ins._pluginConfig.UpdateRate, _ins._pluginConfig.UpdateRate, 0.004f);
             }
 
             private void UpdatePing()
@@ -176,11 +178,6 @@ namespace Oxide.Plugins
             private int CheckPing()
             {
                 return Net.sv.GetAveragePing(Player.net.connection);
-            }
-
-            public int GetPing()
-            {
-                return LastPing;
             }
 
             public void DoDestroy()
@@ -214,6 +211,15 @@ namespace Oxide.Plugins
         {
             public PanelImage Image { get; set; }
             public PanelText Text { get; set; }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Image)] = Image.ToHash(),
+                    [nameof(Text)] = Text.ToHash()
+                };
+            }
         }
 
         private abstract class PanelType
@@ -223,11 +229,30 @@ namespace Oxide.Plugins
             public int Order { get; set; }
             public float Width { get; set; }
             public TypePadding Padding { get; set; }
+            
+            public virtual Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Enabled)] = Enabled,
+                    [nameof(Color)] = Color,
+                    [nameof(Order)] = Order,
+                    [nameof(Width)] = Width,
+                    [nameof(Padding)] = Padding.ToHash(),
+                };
+            }
         }
 
         private class PanelImage : PanelType
         {
             public string Url { get; set; }
+            
+            public override Hash<string, object> ToHash()
+            {
+                Hash<string, object> hash = base.ToHash();
+                hash[nameof(Url)] = Url;
+                return hash;
+            }
         }
 
         private class PanelText : PanelType
@@ -237,6 +262,15 @@ namespace Oxide.Plugins
 
             [JsonConverter(typeof(StringEnumConverter))]
             public TextAnchor TextAnchor { get; set; }
+            
+            public override Hash<string, object> ToHash()
+            {
+                Hash<string, object> hash = base.ToHash();
+                hash[nameof(Text)] = Text;
+                hash[nameof(FontSize)] = FontSize;
+                hash[nameof(TextAnchor)] = TextAnchor;
+                return hash;
+            }
         }
 
         private class TypePadding
@@ -252,6 +286,17 @@ namespace Oxide.Plugins
                 Right = right;
                 Top = top;
                 Bottom = bottom;
+            }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Left)] = Left,
+                    [nameof(Right)] = Right,
+                    [nameof(Top)] = Top,
+                    [nameof(Bottom)] = Bottom
+                };
             }
         }
         #endregion

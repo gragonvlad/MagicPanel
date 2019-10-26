@@ -1,11 +1,13 @@
-﻿using Newtonsoft.Json;
+﻿using System.ComponentModel;
+using System.Linq;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Oxide.Core.Plugins;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Players Panel", "MJSU", "0.0.4")]
+    [Info("Players Panel", "MJSU", "0.0.6")]
     [Description("Displays connected players in magic panel")]
     internal class PlayersPanel : RustPlugin
     {
@@ -107,24 +109,30 @@ namespace Oxide.Plugins
         }
         #endregion
 
-        #region Helper Methods
+        #region MagicPanel Hook
 
-        private string GetPanel()
+        private Hash<string, object> GetPanel()
         {
             Panel panel = _pluginConfig.Panel;
             PanelText text = panel.Text;
             if (text != null)
             {
-                text.Text = string.Format(_textFormat, BasePlayer.activePlayerList.Count.ToString(), ConVar.Server.maxplayers.ToString());
+                text.Text = string.Format(_textFormat, 
+                    BasePlayer.activePlayerList.Count(p => !_pluginConfig.ExcludeAdmins || !p.IsAdmin), 
+                    ConVar.Server.maxplayers);
             }
 
-            return JsonConvert.SerializeObject(panel);
+            return panel.ToHash();
         }
         #endregion
 
         #region Classes
         private class PluginConfig
         {
+            [DefaultValue(false)]
+            [JsonProperty(PropertyName = "Exclude Admins")]
+            public bool ExcludeAdmins { get; set; }
+        
             [JsonProperty(PropertyName = "Panel Settings")]
             public PanelRegistration PanelSettings { get; set; }
 
@@ -144,6 +152,15 @@ namespace Oxide.Plugins
         {
             public PanelImage Image { get; set; }
             public PanelText Text { get; set; }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Image)] = Image.ToHash(),
+                    [nameof(Text)] = Text.ToHash()
+                };
+            }
         }
 
         private abstract class PanelType
@@ -153,11 +170,30 @@ namespace Oxide.Plugins
             public int Order { get; set; }
             public float Width { get; set; }
             public TypePadding Padding { get; set; }
+            
+            public virtual Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Enabled)] = Enabled,
+                    [nameof(Color)] = Color,
+                    [nameof(Order)] = Order,
+                    [nameof(Width)] = Width,
+                    [nameof(Padding)] = Padding.ToHash(),
+                };
+            }
         }
 
         private class PanelImage : PanelType
         {
             public string Url { get; set; }
+            
+            public override Hash<string, object> ToHash()
+            {
+                Hash<string, object> hash = base.ToHash();
+                hash[nameof(Url)] = Url;
+                return hash;
+            }
         }
 
         private class PanelText : PanelType
@@ -167,6 +203,15 @@ namespace Oxide.Plugins
 
             [JsonConverter(typeof(StringEnumConverter))]
             public TextAnchor TextAnchor { get; set; }
+            
+            public override Hash<string, object> ToHash()
+            {
+                Hash<string, object> hash = base.ToHash();
+                hash[nameof(Text)] = Text;
+                hash[nameof(FontSize)] = FontSize;
+                hash[nameof(TextAnchor)] = TextAnchor;
+                return hash;
+            }
         }
 
         private class TypePadding
@@ -182,6 +227,17 @@ namespace Oxide.Plugins
                 Right = right;
                 Top = top;
                 Bottom = bottom;
+            }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Left)] = Left,
+                    [nameof(Right)] = Right,
+                    [nameof(Top)] = Top,
+                    [nameof(Bottom)] = Bottom
+                };
             }
         }
         #endregion

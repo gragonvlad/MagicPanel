@@ -7,9 +7,9 @@ Displays how much longer the player is considered hostile
  
  ```json
 {
-  "Show hide panel": true,
+  "Show/Hide panel": false,
   "Panel Settings": {
-    "Dock": "right",
+    "Dock": "centerupper",
     "Width": 0.08,
     "Order": 14,
     "BackgroundColor": "#fff2df08"
@@ -29,7 +29,7 @@ Displays how much longer the player is considered hostile
       }
     },
     "Text": {
-      "Text": "{0}",
+      "Text": "{0}m {1:00}s",
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
       "Enabled": true,

@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Wipe Panel", "MJSU", "0.0.5")]
+    [Info("Wipe Panel", "MJSU", "0.0.6")]
     [Description("Displays days to wipe in magic panel")]
     internal class WipePanel : RustPlugin
     {
@@ -86,6 +86,12 @@ namespace Oxide.Plugins
 
         private void OnServerInitialized()
         {
+            if (MagicPanel == null)
+            {
+                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                return;
+            }
+            
             if (WipeInfoApi == null)
             {
                 PrintError("Missing plugin dependency WipeInfoApi: https://github.com/dassjosh/MagicPanel");
@@ -117,9 +123,9 @@ namespace Oxide.Plugins
         }
         #endregion
 
-        #region Helper Methods
+        #region MagicPanel Hook
 
-        private string GetPanel()
+        private Hash<string, object> GetPanel()
         {
             Panel panel = _pluginConfig.Panel;
             PanelText text = panel.Text;
@@ -142,7 +148,7 @@ namespace Oxide.Plugins
                 text.Text = string.Format(_textFormat, message);
             }
 
-            return JsonConvert.SerializeObject(panel);
+            return panel.ToHash();
         }
         
         private string Lang(string key, params object[] args) => string.Format(lang.GetMessage(key, this), args);
@@ -177,6 +183,15 @@ namespace Oxide.Plugins
         {
             public PanelImage Image { get; set; }
             public PanelText Text { get; set; }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Image)] = Image.ToHash(),
+                    [nameof(Text)] = Text.ToHash()
+                };
+            }
         }
 
         private abstract class PanelType
@@ -186,11 +201,30 @@ namespace Oxide.Plugins
             public int Order { get; set; }
             public float Width { get; set; }
             public TypePadding Padding { get; set; }
+            
+            public virtual Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Enabled)] = Enabled,
+                    [nameof(Color)] = Color,
+                    [nameof(Order)] = Order,
+                    [nameof(Width)] = Width,
+                    [nameof(Padding)] = Padding.ToHash(),
+                };
+            }
         }
 
         private class PanelImage : PanelType
         {
             public string Url { get; set; }
+            
+            public override Hash<string, object> ToHash()
+            {
+                Hash<string, object> hash = base.ToHash();
+                hash[nameof(Url)] = Url;
+                return hash;
+            }
         }
 
         private class PanelText : PanelType
@@ -200,6 +234,15 @@ namespace Oxide.Plugins
 
             [JsonConverter(typeof(StringEnumConverter))]
             public TextAnchor TextAnchor { get; set; }
+            
+            public override Hash<string, object> ToHash()
+            {
+                Hash<string, object> hash = base.ToHash();
+                hash[nameof(Text)] = Text;
+                hash[nameof(FontSize)] = FontSize;
+                hash[nameof(TextAnchor)] = TextAnchor;
+                return hash;
+            }
         }
 
         private class TypePadding
@@ -215,6 +258,17 @@ namespace Oxide.Plugins
                 Right = right;
                 Top = top;
                 Bottom = bottom;
+            }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Left)] = Left,
+                    [nameof(Right)] = Right,
+                    [nameof(Top)] = Top,
+                    [nameof(Bottom)] = Bottom
+                };
             }
         }
         #endregion

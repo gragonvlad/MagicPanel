@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Economics Panel", "MJSU", "0.0.4")]
+    [Info("Economics Panel", "MJSU", "0.0.6")]
     [Description("Displays player economics data in MagicPanel")]
     internal class EconomicsPanel : RustPlugin
     {
@@ -97,9 +97,9 @@ namespace Oxide.Plugins
         }
         #endregion
 
-        #region Helper Methods
+        #region MagicPanel Hook
 
-        private string GetPanel(BasePlayer player)
+        private Hash<string, object> GetPanel(BasePlayer player)
         {
             Panel panel = _pluginConfig.Panel;
             PanelText text = panel.Text;
@@ -108,7 +108,7 @@ namespace Oxide.Plugins
                 text.Text = string.Format(_textFormat, Economics?.Call<double>("Balance", player.userID) ?? 0);
             }
 
-            return JsonConvert.SerializeObject(panel);
+            return panel.ToHash();
         }
         #endregion
 
@@ -134,6 +134,15 @@ namespace Oxide.Plugins
         {
             public PanelImage Image { get; set; }
             public PanelText Text { get; set; }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Image)] = Image.ToHash(),
+                    [nameof(Text)] = Text.ToHash()
+                };
+            }
         }
 
         private abstract class PanelType
@@ -143,11 +152,30 @@ namespace Oxide.Plugins
             public int Order { get; set; }
             public float Width { get; set; }
             public TypePadding Padding { get; set; }
+            
+            public virtual Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Enabled)] = Enabled,
+                    [nameof(Color)] = Color,
+                    [nameof(Order)] = Order,
+                    [nameof(Width)] = Width,
+                    [nameof(Padding)] = Padding.ToHash(),
+                };
+            }
         }
 
         private class PanelImage : PanelType
         {
             public string Url { get; set; }
+            
+            public override Hash<string, object> ToHash()
+            {
+                Hash<string, object> hash = base.ToHash();
+                hash[nameof(Url)] = Url;
+                return hash;
+            }
         }
 
         private class PanelText : PanelType
@@ -157,6 +185,15 @@ namespace Oxide.Plugins
 
             [JsonConverter(typeof(StringEnumConverter))]
             public TextAnchor TextAnchor { get; set; }
+            
+            public override Hash<string, object> ToHash()
+            {
+                Hash<string, object> hash = base.ToHash();
+                hash[nameof(Text)] = Text;
+                hash[nameof(FontSize)] = FontSize;
+                hash[nameof(TextAnchor)] = TextAnchor;
+                return hash;
+            }
         }
 
         private class TypePadding
@@ -172,6 +209,17 @@ namespace Oxide.Plugins
                 Right = right;
                 Top = top;
                 Bottom = bottom;
+            }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Left)] = Left,
+                    [nameof(Right)] = Right,
+                    [nameof(Top)] = Top,
+                    [nameof(Bottom)] = Bottom
+                };
             }
         }
         #endregion

@@ -7,6 +7,7 @@ Displays the current player count
  
  ```json
 {
+  "Exclude Admins": false,
   "Panel Settings": {
     "Dock": "lefttop",
     "Width": 0.0525,

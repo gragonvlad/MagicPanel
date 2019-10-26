@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Hostile Panel", "MJSU", "0.0.4")]
+    [Info("Hostile Panel", "MJSU", "0.0.6")]
     [Description("Displays how much longer a player is considered hostile")]
     internal class HostilePanel : RustPlugin
     {
@@ -63,7 +63,7 @@ namespace Oxide.Plugins
                     FontSize = config.Panel?.Text?.FontSize ?? 14,
                     Padding = config.Panel?.Text?.Padding ?? new TypePadding(0.05f, 0.05f, 0.05f, 0.05f),
                     TextAnchor = config.Panel?.Text?.TextAnchor ?? TextAnchor.MiddleCenter,
-                    Text = config.Panel?.Text?.Text ?? "{0}",
+                    Text = config.Panel?.Text?.Text ?? "{0}m: {1:00}s",
                 }
             };
             config.PanelSettings = new PanelRegistration
@@ -143,40 +143,30 @@ namespace Oxide.Plugins
         }
         #endregion
 
-        #region Helper Methods
-
-        private string GetPanel(BasePlayer player)
+        #region MagicPanel Hook
+        private Hash<string, object> GetPanel(BasePlayer player)
         {
             Panel panel = _pluginConfig.Panel;
             PanelText text = panel.Text;
             if (text != null)
             {
-                string format;
+                int minutes = 0;
+                int seconds = 0;
                 if (player.unHostileTime > Time.realtimeSinceStartup)
                 {
                     TimeSpan remainingTime = TimeSpan.FromSeconds(player.unHostileTime - Time.realtimeSinceStartup);
-                    if (remainingTime.TotalMinutes > 0)
-                    {
-                        format = $"{remainingTime.Minutes}M:{remainingTime.Seconds:00}S";
-                    }
-                    else
-                    {
-                        format = $"{remainingTime.TotalSeconds}S";
-                    }
+                    minutes = remainingTime.Minutes;
+                    seconds = remainingTime.Seconds;
                 }
-                else
-                {
-                    format = "0s";
-                }
-
-                text.Text = string.Format(_panelText, format);
+                
+                text.Text = string.Format(_panelText, minutes, seconds);
             }
 
-            return JsonConvert.SerializeObject(panel);
+            return panel.ToHash();
         }
         #endregion
 
-        #region Helpers
+        #region Helper Methods
 
         private void HidePanel(BasePlayer player)
         {
@@ -230,6 +220,15 @@ namespace Oxide.Plugins
         {
             public PanelImage Image { get; set; }
             public PanelText Text { get; set; }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Image)] = Image.ToHash(),
+                    [nameof(Text)] = Text.ToHash()
+                };
+            }
         }
 
         private abstract class PanelType
@@ -239,11 +238,30 @@ namespace Oxide.Plugins
             public int Order { get; set; }
             public float Width { get; set; }
             public TypePadding Padding { get; set; }
+            
+            public virtual Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Enabled)] = Enabled,
+                    [nameof(Color)] = Color,
+                    [nameof(Order)] = Order,
+                    [nameof(Width)] = Width,
+                    [nameof(Padding)] = Padding.ToHash(),
+                };
+            }
         }
 
         private class PanelImage : PanelType
         {
             public string Url { get; set; }
+            
+            public override Hash<string, object> ToHash()
+            {
+                Hash<string, object> hash = base.ToHash();
+                hash[nameof(Url)] = Url;
+                return hash;
+            }
         }
 
         private class PanelText : PanelType
@@ -253,6 +271,15 @@ namespace Oxide.Plugins
 
             [JsonConverter(typeof(StringEnumConverter))]
             public TextAnchor TextAnchor { get; set; }
+            
+            public override Hash<string, object> ToHash()
+            {
+                Hash<string, object> hash = base.ToHash();
+                hash[nameof(Text)] = Text;
+                hash[nameof(FontSize)] = FontSize;
+                hash[nameof(TextAnchor)] = TextAnchor;
+                return hash;
+            }
         }
 
         private class TypePadding
@@ -268,6 +295,17 @@ namespace Oxide.Plugins
                 Right = right;
                 Top = top;
                 Bottom = bottom;
+            }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Left)] = Left,
+                    [nameof(Right)] = Right,
+                    [nameof(Top)] = Top,
+                    [nameof(Bottom)] = Bottom
+                };
             }
         }
         #endregion

@@ -1,3 +1,14 @@
+## Version 0.0.6
+HostilePanel -> Text formatting changed
+PlayersPanel -> Configuration to hide admins from count
+All Panels -> Improved GetPanel performance by 5x-8x by sending a dictionary instead of serialized json
+MagicPanel -> Fixed issues with more padding being added to panels and the text and image components than should be.
+MagicPanel -> Don't update panels if no players to update to
+MagicPanel -> Don't attempt to send updates to players with MagicPanel disabled
+MagicPanel -> Remove player hidden panels on disconnect
+
+### Note: All panels need to be on version 0.0.6 to work
+
 ## Version 0.0.5
 DeathNotesPanel -> New Panel  
 WipePanel -> Uses renamed WipeInfo -> WipeInfoApi  

@@ -9,7 +9,7 @@ Displays the current radiation protection for the player verses how much protect
 {
   "Update Rate (Seconds)": 5.0,
   "Panel Settings": {
-    "Dock": "right",
+    "Dock": "centerupper",
     "Width": 0.06,
     "Order": 12,
     "BackgroundColor": "#FFF2DF08"

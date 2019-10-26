@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Coordinates Panel", "MJSU", "0.0.4")]
+    [Info("Coordinates Panel", "MJSU", "0.0.6")]
     [Description("Displays players coordinates in magic panel")]
     internal class CoordinatesPanel : RustPlugin
     {
@@ -117,6 +117,30 @@ namespace Oxide.Plugins
         }
         #endregion
 
+        #region MagicPanel Hook
+        private Hash<string, object> GetPanel(BasePlayer player)
+        {
+            Panel panel = _pluginConfig.Panel;
+            PanelText text = panel.Text;
+            if (text != null)
+            {
+                Vector3 pos;
+                if (player?.IsValid() ?? false)
+                {
+                    pos = player.transform.position;
+                }
+                else
+                {
+                    pos = Vector3.zero;
+                }
+                
+                text.Text = string.Format(_coordText, pos.x, pos.y, pos.z);
+            }
+
+            return panel.ToHash();
+        }
+        #endregion
+        
         #region Helper Methods
 
         private void AddBehavior(BasePlayer player)
@@ -132,28 +156,6 @@ namespace Oxide.Plugins
             CoordsBehavior coords = player.GetComponent<CoordsBehavior>();
             coords?.DoDestroy();
         }
-
-        private string GetPanel(BasePlayer player)
-        {
-            Panel panel = _pluginConfig.Panel;
-            PanelText text = panel.Text;
-            Vector3 pos;
-            if (player != null && player.IsValid())
-            {
-                pos = player.transform.position;
-            }
-            else
-            {
-                pos = Vector3.zero;
-            }
-
-            if (text != null)
-            {
-                text.Text = string.Format(_coordText, pos.x, pos.y, pos.z);
-            }
-
-            return JsonConvert.SerializeObject(panel);
-        }
         #endregion
 
         #region Classes
@@ -168,7 +170,7 @@ namespace Oxide.Plugins
                 enabled = false;
                 Player = GetComponent<BasePlayer>();
                 LastPos = Player.transform.position;
-                InvokeRepeating(UpdateCoords, _ins._pluginConfig.UpdateRate, _ins._pluginConfig.UpdateRate);
+                InvokeRandomized(UpdateCoords, _ins._pluginConfig.UpdateRate, _ins._pluginConfig.UpdateRate, 0.004f);
             }
 
             private void UpdateCoords()
@@ -212,6 +214,15 @@ namespace Oxide.Plugins
         {
             public PanelImage Image { get; set; }
             public PanelText Text { get; set; }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Image)] = Image.ToHash(),
+                    [nameof(Text)] = Text.ToHash()
+                };
+            }
         }
 
         private abstract class PanelType
@@ -221,11 +232,30 @@ namespace Oxide.Plugins
             public int Order { get; set; }
             public float Width { get; set; }
             public TypePadding Padding { get; set; }
+            
+            public virtual Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Enabled)] = Enabled,
+                    [nameof(Color)] = Color,
+                    [nameof(Order)] = Order,
+                    [nameof(Width)] = Width,
+                    [nameof(Padding)] = Padding.ToHash(),
+                };
+            }
         }
 
         private class PanelImage : PanelType
         {
             public string Url { get; set; }
+            
+            public override Hash<string, object> ToHash()
+            {
+                Hash<string, object> hash = base.ToHash();
+                hash[nameof(Url)] = Url;
+                return hash;
+            }
         }
 
         private class PanelText : PanelType
@@ -235,6 +265,15 @@ namespace Oxide.Plugins
 
             [JsonConverter(typeof(StringEnumConverter))]
             public TextAnchor TextAnchor { get; set; }
+            
+            public override Hash<string, object> ToHash()
+            {
+                Hash<string, object> hash = base.ToHash();
+                hash[nameof(Text)] = Text;
+                hash[nameof(FontSize)] = FontSize;
+                hash[nameof(TextAnchor)] = TextAnchor;
+                return hash;
+            }
         }
 
         private class TypePadding
@@ -250,6 +289,17 @@ namespace Oxide.Plugins
                 Right = right;
                 Top = top;
                 Bottom = bottom;
+            }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Left)] = Left,
+                    [nameof(Right)] = Right,
+                    [nameof(Top)] = Top,
+                    [nameof(Bottom)] = Bottom
+                };
             }
         }
         #endregion

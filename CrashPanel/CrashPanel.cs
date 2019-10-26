@@ -7,7 +7,7 @@ using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("Crash Panel", "MJSU", "0.0.4")]
+    [Info("Crash Panel", "MJSU", "0.0.6")]
     [Description("Displays if the plane crash event is active")]
     internal class CrashPanel : RustPlugin
     {
@@ -114,6 +114,20 @@ namespace Oxide.Plugins
         }
         #endregion
 
+        #region MagicPanel Hook
+        private Hash<string, object> GetPanel()
+        {
+            Panel panel = _pluginConfig.Panel;
+            PanelImage image = panel.Image;
+            if (image != null)
+            {
+                image.Color = _isCrashPlane ? _pluginConfig.ActiveColor : _pluginConfig.InactiveColor;
+            }
+
+            return panel.ToHash();
+        }
+        #endregion
+
         #region Helper Methods
         private bool CanShowPanel(CargoPlane plane)
         {
@@ -129,18 +143,6 @@ namespace Oxide.Plugins
             }
 
             return true;
-        }
-
-        private string GetPanel()
-        {
-            Panel panel = _pluginConfig.Panel;
-            PanelImage image = panel.Image;
-            if (image != null)
-            {
-                image.Color = _isCrashPlane ? _pluginConfig.ActiveColor : _pluginConfig.InactiveColor;
-            }
-
-            return JsonConvert.SerializeObject(panel);
         }
 
         private bool IsCrashPlane(CargoPlane plane)
@@ -183,6 +185,14 @@ namespace Oxide.Plugins
         private class Panel
         {
             public PanelImage Image { get; set; }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Image)] = Image.ToHash(),
+                };
+            }
         }
 
         private abstract class PanelType
@@ -192,11 +202,30 @@ namespace Oxide.Plugins
             public int Order { get; set; }
             public float Width { get; set; }
             public TypePadding Padding { get; set; }
+            
+            public virtual Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Enabled)] = Enabled,
+                    [nameof(Color)] = Color,
+                    [nameof(Order)] = Order,
+                    [nameof(Width)] = Width,
+                    [nameof(Padding)] = Padding.ToHash(),
+                };
+            }
         }
 
         private class PanelImage : PanelType
         {
             public string Url { get; set; }
+            
+            public override Hash<string, object> ToHash()
+            {
+                Hash<string, object> hash = base.ToHash();
+                hash[nameof(Url)] = Url;
+                return hash;
+            }
         }
 
         private class TypePadding
@@ -212,6 +241,17 @@ namespace Oxide.Plugins
                 Right = right;
                 Top = top;
                 Bottom = bottom;
+            }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Left)] = Left,
+                    [nameof(Right)] = Right,
+                    [nameof(Top)] = Top,
+                    [nameof(Bottom)] = Bottom
+                };
             }
         }
         #endregion

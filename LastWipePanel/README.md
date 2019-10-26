@@ -8,7 +8,7 @@ Displays when the server last wiped
  ```json
 {
   "Panel Settings": {
-    "Dock": "right",
+    "Dock": "centerupper",
     "Width": 0.1,
     "Order": 9,
     "BackgroundColor": "#FFF2DF08"

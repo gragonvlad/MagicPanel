@@ -11,9 +11,9 @@ The LastWipe plugin is required in order to use this panel.
  ```json
 {
   "Panel Settings": {
-    "Dock": "right",
-    "Width": 0.1,
-    "Order": 9,
+    "Dock": "centerupper",
+    "Width": 0.08,
+    "Order": 10,
     "BackgroundColor": "#FFF2DF08"
   },
   "Panel Layout": {
@@ -22,17 +22,17 @@ The LastWipe plugin is required in order to use this panel.
       "Enabled": false,
       "Color": "#FFFFFFFF",
       "Order": 0,
-      "Width": 0.33,
+      "Width": 0.4,
       "Padding": {
         "Left": 0.05,
         "Right": 0.0,
-        "Top": 0.05,
-        "Bottom": 0.05
+        "Top": 0.1,
+        "Bottom": 0.1
       }
     },
     "Text": {
-      "Text": "Last Wipe: {0:MM/dd/yyyy}",
-      "FontSize": 12,
+      "Text": "Wipe: {0}",
+      "FontSize": 14,
       "TextAnchor": "MiddleCenter",
       "Enabled": true,
       "Color": "#08C717FF",

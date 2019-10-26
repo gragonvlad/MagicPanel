@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Server Rewards Panel", "MJSU", "0.0.4")]
+    [Info("Server Rewards Panel", "MJSU", "0.0.6")]
     [Description("Displays player server rewards data in MagicPanel")]
     internal class ServerRewardsPanel : RustPlugin
     {
@@ -120,6 +120,21 @@ namespace Oxide.Plugins
         }
         #endregion
 
+        #region MagicPanel Hook
+        private Hash<string, object> GetPanel(BasePlayer player)
+        {
+            Panel panel = _pluginConfig.Panel;
+            PanelText text = panel.Text;
+            if (text != null)
+            {
+                PlayerRewardsBehavior points = player.GetComponent<PlayerRewardsBehavior>();
+                text.Text = string.Format(_textFormat, points.Points);
+            }
+
+            return panel.ToHash();
+        }
+        #endregion
+
         #region Helper Methods
 
         private int GetServerRewards(ulong userId)
@@ -133,25 +148,6 @@ namespace Oxide.Plugins
 
             return points;
         }
-
-        private string GetPanel(BasePlayer player)
-        {
-            Panel panel = _pluginConfig.Panel;
-            PanelText text = panel.Text;
-            if (text != null)
-            {
-                PlayerRewardsBehavior points = player.GetComponent<PlayerRewardsBehavior>();
-                if (points == null)
-                {
-                    OnPlayerInit(player);
-                    points = player.GetComponent<PlayerRewardsBehavior>();
-                }
-                
-                text.Text = string.Format(_textFormat, points.GetPoints());
-            }
-
-            return JsonConvert.SerializeObject(panel);
-        }
         #endregion
 
         #region Behavior
@@ -159,13 +155,13 @@ namespace Oxide.Plugins
         private class PlayerRewardsBehavior : FacepunchBehaviour
         {
             private BasePlayer Player { get; set; }
-            private int Points { get; set; }
+            public int Points { get; private set; }
 
             private void Awake()
             {
                 Player = GetComponent<BasePlayer>();
                 Points = _ins.GetServerRewards(Player.userID);
-                InvokeRepeating(UpdatePoints, _ins._pluginConfig.UpdateRate, _ins._pluginConfig.UpdateRate);
+                InvokeRandomized(UpdatePoints, _ins._pluginConfig.UpdateRate, _ins._pluginConfig.UpdateRate, 0.004f);
             }
 
             private void UpdatePoints()
@@ -176,11 +172,6 @@ namespace Oxide.Plugins
                     Points = newPoints;
                     _ins.MagicPanel?.Call("UpdatePanel", Player, _ins.Name, (int)UpdateEnum.Text);   
                 }
-            }
-            
-            public int GetPoints()
-            {
-                return Points;
             }
 
             public void DoDestroy()
@@ -217,6 +208,15 @@ namespace Oxide.Plugins
         {
             public PanelImage Image { get; set; }
             public PanelText Text { get; set; }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Image)] = Image.ToHash(),
+                    [nameof(Text)] = Text.ToHash()
+                };
+            }
         }
 
         private abstract class PanelType
@@ -226,11 +226,30 @@ namespace Oxide.Plugins
             public int Order { get; set; }
             public float Width { get; set; }
             public TypePadding Padding { get; set; }
+            
+            public virtual Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Enabled)] = Enabled,
+                    [nameof(Color)] = Color,
+                    [nameof(Order)] = Order,
+                    [nameof(Width)] = Width,
+                    [nameof(Padding)] = Padding.ToHash(),
+                };
+            }
         }
 
         private class PanelImage : PanelType
         {
             public string Url { get; set; }
+            
+            public override Hash<string, object> ToHash()
+            {
+                Hash<string, object> hash = base.ToHash();
+                hash[nameof(Url)] = Url;
+                return hash;
+            }
         }
 
         private class PanelText : PanelType
@@ -240,6 +259,15 @@ namespace Oxide.Plugins
 
             [JsonConverter(typeof(StringEnumConverter))]
             public TextAnchor TextAnchor { get; set; }
+            
+            public override Hash<string, object> ToHash()
+            {
+                Hash<string, object> hash = base.ToHash();
+                hash[nameof(Text)] = Text;
+                hash[nameof(FontSize)] = FontSize;
+                hash[nameof(TextAnchor)] = TextAnchor;
+                return hash;
+            }
         }
 
         private class TypePadding
@@ -255,6 +283,17 @@ namespace Oxide.Plugins
                 Right = right;
                 Top = top;
                 Bottom = bottom;
+            }
+            
+            public Hash<string, object> ToHash()
+            {
+                return new Hash<string, object>
+                {
+                    [nameof(Left)] = Left,
+                    [nameof(Right)] = Right,
+                    [nameof(Top)] = Top,
+                    [nameof(Bottom)] = Bottom
+                };
             }
         }
         #endregion
