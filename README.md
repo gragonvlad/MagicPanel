@@ -179,6 +179,27 @@ Panels dynamically position themselves within a dock based on the dock assigned 
 - Right: The x Position will be the right position for the dock
     - The order of the panel will be reversed with the right most panel being the lowest order value
 
+## Dock Positioning / Size
+
+### Position
+The dock postion is controlled by the `X Position` and `Y Start Position` fields in the config.
+The values range between 0 and 1. The bottom left of the screen is X: 0, Y: 0 and the top right is X: 1, Y: 1.
+The middle of the screen would be X: 0.5, Y: 0.5
+The Y position is the bottom position of the dock. 
+The X position depends on the panel alignment. 
+If the panel alignment is left then it will be the left most position.
+If the panel alignment is center then it will be the middle of the dock.
+If the panel alignment is right then it will be the right most position of the dock.
+
+### Size
+The size of the panel is control by the hight and number of panels. The height tall the dock will be and the panels will scale to this height.
+The Width is dynamically calculated based on the number of panels and the dock padding.
+
+## Panel Order
+Panels are dynamically placed into a dock based on their order specified in each panels config. 
+This order will be left being the lowest value for both left and center.
+For right alignment docks the right will be the lowest value.
+
 ## Chat Commands
 * `/mp` - shows the magic panel help text  
 * `/mp off`- hides all panels for the player  

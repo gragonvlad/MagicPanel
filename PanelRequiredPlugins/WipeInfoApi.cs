@@ -18,6 +18,7 @@ namespace Oxide.Plugins
 
         private DateTime _nextWipe;
         private int _daysTillNextWipe;
+        private int _daysBetweenWipes;
         private bool _isForcedWipeDay;
         private bool _newSaveVersion;
         #endregion
@@ -35,7 +36,10 @@ namespace Oxide.Plugins
                 Interface.Call("OnSaveVersionChanged");
                 NextTick(SaveData);
             }
-            
+        }
+
+        private void Loaded()
+        {
             CalculateWipe();
         }
 
@@ -112,24 +116,26 @@ namespace Oxide.Plugins
 
             List<WipeSchedule> schedule = null;
             List<DateTime> wipes = new List<DateTime>();
-            if ((int) (nextWipe - lastWipe).TotalDays <= 28)
+            _daysBetweenWipes = (int) (nextWipe - lastWipe).TotalDays;
+            if (_daysBetweenWipes <= 28)
             {
                 schedule = _pluginConfig.ScheduleWeek4;
             }
-            else if ((int) (nextWipe - lastWipe).TotalDays <= 35)
+            else if (_daysBetweenWipes <= 35)
             {
                 schedule = _pluginConfig.ScheduleWeek5;
             }
 
             if (schedule == null)
             {
-                schedule = _pluginConfig.ScheduleWeek5;
+                PrintError($"Schedule was null! Wipe Length: {_daysBetweenWipes}");
+                return;
             }
 
             foreach (WipeSchedule wipeSchedule in schedule)
             {
-                DateTime wipeNow = GetWipe(wipeDate, wipeSchedule.DayOfWeek, wipeSchedule.Occurrence);
-                DateTime wipeNext = GetWipe(wipeDate.AddMonths(1), wipeSchedule.DayOfWeek, wipeSchedule.Occurrence);
+                DateTime wipeNow = GetWipe(wipeDate, wipeSchedule.DayOfWeek, wipeSchedule.Occurrence, lastWipe);
+                DateTime wipeNext = GetWipe(wipeDate.AddMonths(1), wipeSchedule.DayOfWeek, wipeSchedule.Occurrence, lastWipe);
 
                 wipes.Add(wipeNow);
                 wipes.Add(wipeNext);
@@ -137,8 +143,7 @@ namespace Oxide.Plugins
 
             _nextWipe = wipes.OrderBy(w => w).FirstOrDefault(w => w > DateTime.UtcNow);
             _daysTillNextWipe = (_nextWipe - DateTime.Today).Days;
-            //Puts($"Next Wipe: {_nextWipe} Days Until: {_daysTillNextWipe}\n{GetWipeText()}");
-            Interface.Call("OnWipeCalculated");
+            Puts($"Next Wipe: {_nextWipe} Days Until: {_daysTillNextWipe}");
         }
 
         private DateTime GetWipe(DateTime date)
@@ -147,13 +152,20 @@ namespace Oxide.Plugins
             return new DateTime(date.Year, date.Month, day);
         }
         
-        private DateTime GetWipe(DateTime date, DayOfWeek dow, int occurence)
+        private DateTime GetWipe(DateTime date, DayOfWeek dow, int occurence, DateTime lastWipe)
         {
+            int firstOccurence = FindDay(date.Year, date.Month, dow, 1);
+            if (firstOccurence < lastWipe.Day)
+            {
+                occurence++;
+            }
+            
             int day = FindDay(date.Year, date.Month, dow, occurence);
             if (day < 1 || day > DateTime.DaysInMonth(date.Year, date.Month))
             {
                 return DateTime.MinValue;
             }
+            
             return new DateTime(date.Year, date.Month, day);
         }
         
@@ -191,7 +203,7 @@ namespace Oxide.Plugins
 
         private int GetDaysBetweenWipe()
         {
-            return (_nextWipe - SaveRestore.SaveCreatedTime).Days;
+            return _daysBetweenWipes;
         }
 
         private bool IsForcedWipeDay()

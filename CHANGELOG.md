@@ -1,3 +1,8 @@
+## Version 0.0.7
+HostilePanel -> Update Panel immediately when becoming hostile  
+LastWipePanel -> Fixed Plugin Name and Description  
+MagicPanel -> Fixed Left and Right padding not working on Text and Images
+
 ## Version 0.0.6
 HostilePanel -> Text formatting changed  
 PlayersPanel -> Configuration to hide admins from count  

@@ -7,7 +7,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Hostile Panel", "MJSU", "0.0.6")]
+    [Info("Hostile Panel", "MJSU", "0.0.7")]
     [Description("Displays how much longer a player is considered hostile")]
     internal class HostilePanel : RustPlugin
     {
@@ -128,6 +128,7 @@ namespace Oxide.Plugins
             }
 
             ShowPanel(player);
+            UpdatePanel(player);
             _hostileTimer[player.userID]?.Destroy();
             _hostileTimer[player.userID] = timer.Every(1f, () =>
             {

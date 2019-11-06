@@ -274,7 +274,7 @@ namespace Oxide.Plugins
 
         private void OnPlayerInit(BasePlayer player)
         {
-            if (player.IsSleeping())
+            if (player.HasPlayerFlag(BasePlayer.PlayerFlags.ReceivingSnapshot))
             {
                 timer.In(1f, () => { OnPlayerInit(player); });
                 return;
@@ -571,7 +571,7 @@ namespace Oxide.Plugins
         private void DrawGlobalPanel(List<BasePlayer> players, PanelSetup setup, UpdateEnum updateEnum)
         {
             PanelRegistration reg = setup.PanelReg;
-
+            
             Hash<string, object> panelData = reg.Plugin.Call<Hash<string, object>>(reg.GetPanelMethod, reg.Name);
             if (panelData == null)
             {
@@ -774,9 +774,9 @@ namespace Oxide.Plugins
 
         private UiPosition GetTypePosition(float startPos, float widthPercentage, TypePadding padding)
         {
-            UiPosition pos = new UiPosition(startPos,
+            UiPosition pos = new UiPosition(startPos + padding.Left,
                 padding.Bottom,
-                widthPercentage,
+                widthPercentage * (1 - (padding.Left + padding.Right)),
                 1 - (padding.Top + padding.Bottom));
             return pos;
         }

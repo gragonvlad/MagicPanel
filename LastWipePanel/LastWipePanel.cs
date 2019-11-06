@@ -5,8 +5,8 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Wipe Panel", "MJSU", "0.0.6")]
-    [Description("Displays days to wipe in magic panel")]
+    [Info("Last Wipe Panel", "MJSU", "0.0.7")]
+    [Description("Displays the date the server wiped in magic panel")]
     internal class LastWipePanel : RustPlugin
     {
         #region Class Fields
