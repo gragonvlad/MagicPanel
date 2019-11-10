@@ -32,7 +32,7 @@ Displays the players current economics balance
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
       "Enabled": true,
-      "Color": "#85BB65FF",
+      "Color": "#FFFFFFFF",
       "Order": 1,
       "Width": 0.67,
       "Padding": {

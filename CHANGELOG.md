@@ -1,3 +1,24 @@
+## Version 0.0.8
+
+# NOTE:
+The config files save path has been changed  
+Previously `oxide/config/*Panel.json`  
+Now: `oxide/config/MagicPanel/*Panel.json`  
+Please move all your panel configs and MagicPanel config into the MagicPanel folder before updating!
+
+All Panels -> Updated to new save location  
+All Panels -> Default text to white  
+All Panels -> Using white default icons  
+EasterPanel -> New Panel  
+GatherPanel -> New Panel  
+HalloweenPanel -> New Panel  
+RainOfFirePanel -> New Panel  
+SantaPanel -> New Panel  
+ImagesPanel -> Can enable and disable each image panel individually  
+MessagesPanel -> Can enable and disable each message panel individually  
+ServerRewardsPanel -> Possible NRE fix  
+WipeInfoApi -> Bug fixes for wipe calculation  
+
 ## Version 0.0.7
 HostilePanel -> Update Panel immediately when becoming hostile  
 LastWipePanel -> Fixed Plugin Name and Description  

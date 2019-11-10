@@ -10,7 +10,7 @@ Change the color of the Radiation Icon when a player is in a radiation zone
   "Active Color": "#FFFF00FF",
   "Inactive Color": "#FFFFFF1A",
   "Panel Settings": {
-    "Dock": "right",
+    "Dock": "center",
     "Width": 0.02,
     "Order": 7,
     "BackgroundColor": "#FFF2DF08"

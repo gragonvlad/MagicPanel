@@ -11,7 +11,7 @@ Change the color of the Bradley icon when the Bradley is active
   "Inactive Color": "#FFFFFF1A",
   "Update Rate (Seconds)": 5.0,
   "Panel Settings": {
-    "Dock": "right",
+    "Dock": "center",
     "Width": 0.02,
     "Order": 0,
     "BackgroundColor": "#FFF2DF08"

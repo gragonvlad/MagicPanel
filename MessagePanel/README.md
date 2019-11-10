@@ -37,7 +37,8 @@ Displays Messages
         "Message 2",
         "<color=#FF0000>This message is red</color>"
       ],
-      "Update Rate (Seconds)": 15.0
+      "Update Rate (Seconds)": 15.0,
+      "Enabled": true
     }
   }
 }

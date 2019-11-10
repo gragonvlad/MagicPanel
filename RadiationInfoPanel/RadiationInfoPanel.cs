@@ -1,12 +1,14 @@
-﻿using System.ComponentModel;
+﻿using System;
+using System.ComponentModel;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Oxide.Core.Configuration;
 using Oxide.Core.Plugins;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Radiation Info Panel", "MJSU", "0.0.6")]
+    [Info("Radiation Info Panel", "MJSU", "0.0.8")]
     [Description("Displays how much radiation protection the player has verse how much they need")]
     internal class RadiationInfoPanel : RustPlugin
     {
@@ -36,10 +38,26 @@ namespace Oxide.Plugins
 
         protected override void LoadConfig()
         {
-            base.LoadConfig();
-            Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
-            _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
-            Config.WriteObject(_pluginConfig);
+            string path = $"{Manager.ConfigPath}/MagicPanel/{Name}.json";
+            DynamicConfigFile newConfig = new DynamicConfigFile(path);
+            if (!newConfig.Exists())
+            {
+                LoadDefaultConfig();
+                newConfig.Save();
+            }
+            try
+            {
+                newConfig.Load();
+            }
+            catch (Exception ex)
+            {
+                RaiseError("Failed to load config file (is the config file corrupt?) (" + ex.Message + ")");
+                return;
+            }
+            
+            newConfig.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
+            _pluginConfig = AdditionalConfig(newConfig.ReadObject<PluginConfig>());
+            newConfig.WriteObject(_pluginConfig);
         }
 
         private PluginConfig AdditionalConfig(PluginConfig config)
@@ -51,16 +69,16 @@ namespace Oxide.Plugins
                     Enabled = config.Panel?.Image?.Enabled ?? true,
                     Color = config.Panel?.Image?.Color ?? "#FFFFFFFF",
                     Order = config.Panel?.Image?.Order ?? 0,
-                    Width = config.Panel?.Image?.Width ?? 0.24f,
+                    Width = config.Panel?.Image?.Width ?? 0.28f,
                     Url = config.Panel?.Image?.Url ?? "https://i.imgur.com/hnNhgFj.png",
                     Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.01f, 0.00f, 0.1f, 0.1f)
                 },
                 Text = new PanelText
                 {
                     Enabled = config.Panel?.Text?.Enabled ?? true,
-                    Color = config.Panel?.Text?.Color ?? "#FF6600FF",
+                    Color = config.Panel?.Text?.Color ?? "#FFFFFFFF",  
                     Order = config.Panel?.Text?.Order ?? 1,
-                    Width = config.Panel?.Text?.Width ?? .76f,
+                    Width = config.Panel?.Text?.Width ?? .72f,
                     FontSize = config.Panel?.Text?.FontSize ?? 14,
                     Padding = config.Panel?.Text?.Padding ?? new TypePadding(0.01f, 0.01f, 0.05f, 0.05f),
                     TextAnchor = config.Panel?.Text?.TextAnchor ?? TextAnchor.MiddleCenter,
@@ -72,7 +90,7 @@ namespace Oxide.Plugins
                 BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#FFF2DF08",
                 Dock = config.PanelSettings?.Dock ?? "centerupper",
                 Order = config.PanelSettings?.Order ?? 12,
-                Width = config.PanelSettings?.Width ?? 0.06f
+                Width = config.PanelSettings?.Width ?? 0.0525f
             };
             return config;
         }

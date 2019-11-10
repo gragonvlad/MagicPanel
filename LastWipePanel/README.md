@@ -32,7 +32,7 @@ Displays when the server last wiped
       "FontSize": 12,
       "TextAnchor": "MiddleCenter",
       "Enabled": true,
-      "Color": "#08C717FF",
+      "Color": "#FFFFFFFF",
       "Order": 1,
       "Width": 1.0,
       "Padding": {

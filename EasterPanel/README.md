@@ -1,31 +1,30 @@
-# Ch47 Panel
+# Easter Panel
 
 ## About
-Change the color of the Ch47 icon when the Ch47 Event is active
+Change the color of the Easter icon when the Easter Event is active
 
 ## Configuration
  
  ```json
 {
   "Active Color": "#00FF00FF",
-  "Inactive Color": "#ffffff1A",
-  "Update Rate (Seconds)": 5.0,
+  "Inactive Color": "#FFFFFF1A",
   "Panel Settings": {
     "Dock": "center",
     "Width": 0.02,
-    "Order": 2,
+    "Order": 12,
     "BackgroundColor": "#FFF2DF08"
   },
   "Panel Layout": {
     "Image": {
-      "Url": "https://i.imgur.com/89Jm3Lf.png",
+      "Url": "https://i.imgur.com/pTpHnl2.png",
       "Enabled": true,
       "Color": "#FFFFFFFF",
-      "Order": 4,
+      "Order": 0,
       "Width": 1.0,
       "Padding": {
-        "Left": 0.03,
-        "Right": 0.12,
+        "Left": 0.05,
+        "Right": 0.05,
         "Top": 0.05,
         "Bottom": 0.05
       }

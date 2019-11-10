@@ -92,70 +92,66 @@ namespace Oxide.Plugins
         #region Wipe Calculations
         private void CalculateWipe()
         {
-            if (SaveRestore.SaveCreatedTime != DateTime.MinValue && _storedData.PreviousWipe != SaveRestore.SaveCreatedTime.Date)
+            if (SaveRestore.SaveCreatedTime > _storedData.PreviousWipe)
             {
                 _storedData.PreviousWipe = SaveRestore.SaveCreatedTime.Date;
                 NextTick(SaveData);
             }
             
-            DateTime wipeDate = _storedData.PreviousWipe;
-
-            DateTime lastWipe = GetWipe(wipeDate);
-            DateTime nextWipe = GetWipe(wipeDate.AddMonths(1));
-
-            if (lastWipe > DateTime.UtcNow)
+            DateTime lastForcedWipe = GetForcedWipe(_storedData.PreviousWipe);
+            DateTime nextForcedWipe = GetForcedWipe(_storedData.PreviousWipe.AddMonths(1));
+            if (lastForcedWipe > DateTime.UtcNow)
             {
-                nextWipe = lastWipe;
-                lastWipe = GetWipe(wipeDate.AddMonths(-1));
+                nextForcedWipe = lastForcedWipe;
+                lastForcedWipe = GetForcedWipe(_storedData.PreviousWipe.AddMonths(-1));
             }
 
-            if (nextWipe.Date == DateTime.Now.Date && !_newSaveVersion)
+            if (nextForcedWipe.Date == DateTime.Now.Date && !_newSaveVersion)
             {
                 _isForcedWipeDay = true;
             }
 
-            List<WipeSchedule> schedule = null;
+            _daysBetweenWipes = (int) (nextForcedWipe - lastForcedWipe).TotalDays;
             List<DateTime> wipes = new List<DateTime>();
-            _daysBetweenWipes = (int) (nextWipe - lastWipe).TotalDays;
-            if (_daysBetweenWipes <= 28)
+            List<WipeSchedule> schedule;
+            if (_daysBetweenWipes == 28)
             {
                 schedule = _pluginConfig.ScheduleWeek4;
             }
-            else if (_daysBetweenWipes <= 35)
+            else if (_daysBetweenWipes == 35)
             {
                 schedule = _pluginConfig.ScheduleWeek5;
             }
-
-            if (schedule == null)
+            else
             {
-                PrintError($"Schedule was null! Wipe Length: {_daysBetweenWipes}");
+                PrintError($"Invalid Wipe length! Wipe Length: {_daysBetweenWipes}");
                 return;
             }
 
             foreach (WipeSchedule wipeSchedule in schedule)
             {
-                DateTime wipeNow = GetWipe(wipeDate, wipeSchedule.DayOfWeek, wipeSchedule.Occurrence, lastWipe);
-                DateTime wipeNext = GetWipe(wipeDate.AddMonths(1), wipeSchedule.DayOfWeek, wipeSchedule.Occurrence, lastWipe);
+                DateTime wipeNow = GetScheduledWipe(lastForcedWipe, wipeSchedule.DayOfWeek, wipeSchedule.Occurrence, lastForcedWipe);
+                DateTime wipeNext = GetScheduledWipe(lastForcedWipe.AddMonths(1), wipeSchedule.DayOfWeek, wipeSchedule.Occurrence, lastForcedWipe);
 
                 wipes.Add(wipeNow);
                 wipes.Add(wipeNext);
             }
 
-            _nextWipe = wipes.OrderBy(w => w).FirstOrDefault(w => w > DateTime.UtcNow);
+            _nextWipe = wipes.OrderBy(w => w).FirstOrDefault(w => w > _storedData.PreviousWipe);
             _daysTillNextWipe = (_nextWipe - DateTime.Today).Days;
             Puts($"Next Wipe: {_nextWipe} Days Until: {_daysTillNextWipe}");
         }
 
-        private DateTime GetWipe(DateTime date)
+        private DateTime GetForcedWipe(DateTime date)
         {
             int day = FindDay(date.Year, date.Month, DayOfWeek.Thursday, 1);
             return new DateTime(date.Year, date.Month, day);
         }
         
-        private DateTime GetWipe(DateTime date, DayOfWeek dow, int occurence, DateTime lastWipe)
+        private DateTime GetScheduledWipe(DateTime date, DayOfWeek dow, int occurence, DateTime lastWipe)
         {
             int firstOccurence = FindDay(date.Year, date.Month, dow, 1);
-            if (firstOccurence < lastWipe.Day)
+            if (firstOccurence < lastWipe.Day && date.Month == lastWipe.Month)
             {
                 occurence++;
             }

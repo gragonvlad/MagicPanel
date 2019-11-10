@@ -1,7 +1,7 @@
-# Air Strike Panel
+# Rain of Fire Panel
 
 ## About
-Change the color of the Air Strike icon when an Air Strike is active.
+Change the color of the Meteor Icon when the rain of fire event is active
 
 ## Configuration
  
@@ -9,23 +9,23 @@ Change the color of the Air Strike icon when an Air Strike is active.
 {
   "Active Color": "#00FF00FF",
   "Inactive Color": "#FFFFFF1A",
-  "Update Rate (Seconds)": 5.0,
+  "Event ends after last rocket (Seconds)": 5.0,
   "Panel Settings": {
     "Dock": "center",
     "Width": 0.02,
-    "Order": 1,
+    "Order": 14,
     "BackgroundColor": "#FFF2DF08"
   },
   "Panel Layout": {
     "Image": {
-      "Url": "https://i.imgur.com/h3ayf2x.png",
+      "Url": "https://i.imgur.com/P01HCi3.png",
       "Enabled": true,
       "Color": "#FFFFFFFF",
-      "Order": 2,
+      "Order": 6,
       "Width": 1.0,
       "Padding": {
-        "Left": 0.1,
-        "Right": 0.1,
+        "Left": 0.05,
+        "Right": 0.05,
         "Top": 0.05,
         "Bottom": 0.05
       }

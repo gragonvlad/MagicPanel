@@ -2,12 +2,13 @@
 using System.ComponentModel;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Oxide.Core.Configuration;
 using Oxide.Core.Plugins;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Clock Panel", "MJSU", "0.0.6")]
+    [Info("Clock Panel", "MJSU", "0.0.8")]
     [Description("Displays the servers local time in magic panel")]
     internal class ServerTimePanel : RustPlugin
     {
@@ -35,10 +36,26 @@ namespace Oxide.Plugins
 
         protected override void LoadConfig()
         {
-            base.LoadConfig();
-            Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
-            _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
-            Config.WriteObject(_pluginConfig);
+            string path = $"{Manager.ConfigPath}/MagicPanel/{Name}.json";
+            DynamicConfigFile newConfig = new DynamicConfigFile(path);
+            if (!newConfig.Exists())
+            {
+                LoadDefaultConfig();
+                newConfig.Save();
+            }
+            try
+            {
+                newConfig.Load();
+            }
+            catch (Exception ex)
+            {
+                RaiseError("Failed to load config file (is the config file corrupt?) (" + ex.Message + ")");
+                return;
+            }
+            
+            newConfig.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
+            _pluginConfig = AdditionalConfig(newConfig.ReadObject<PluginConfig>());
+            newConfig.WriteObject(_pluginConfig);
         }
 
         private PluginConfig AdditionalConfig(PluginConfig config)
@@ -48,22 +65,22 @@ namespace Oxide.Plugins
                 Image = new PanelImage
                 {
                     Enabled = config.Panel?.Image?.Enabled ?? true,
-                    Color = config.Panel?.Image?.Color     ?? "#FFFFFFFF",
-                    Order = config.Panel?.Image?.Order     ?? 0,
-                    Width = config.Panel?.Image?.Width     ?? 0.28f,
-                    Url = config.Panel?.Image?.Url         ?? "https://i.imgur.com/IcYSp9E.png",
+                    Color = config.Panel?.Image?.Color ?? "#FFFFFFFF",
+                    Order = config.Panel?.Image?.Order ?? 0,
+                    Width = config.Panel?.Image?.Width ?? 0.28f,
+                    Url = config.Panel?.Image?.Url ?? "https://i.imgur.com/cGisDjH.png",
                     Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.0f, 0.1f, 0.1f)
                 },
                 Text = new PanelText
                 {
                     Enabled = config.Panel?.Text?.Enabled ?? true,
-                    Color = config.Panel?.Text?.Color           ?? "#FF804FFF",
-                    Order = config.Panel?.Text?.Order           ?? 1,
-                    Width = config.Panel?.Text?.Width           ?? 0.72f,
-                    FontSize = config.Panel?.Text?.FontSize     ?? 14,
-                    Padding = config.Panel?.Text?.Padding       ?? new TypePadding(0.05f, 0.05f, 0.05f, 0.05f),
+                    Color = config.Panel?.Text?.Color ?? "#FFFFFFFF",  
+                    Order = config.Panel?.Text?.Order ?? 1,
+                    Width = config.Panel?.Text?.Width ?? 0.72f,
+                    FontSize = config.Panel?.Text?.FontSize ?? 14,
+                    Padding = config.Panel?.Text?.Padding ?? new TypePadding(0.05f, 0.05f, 0.05f, 0.05f),
                     TextAnchor = config.Panel?.Text?.TextAnchor ?? TextAnchor.MiddleCenter,
-                    Text = config.Panel?.Text?.Text             ?? "{0:hh:mm tt}"
+                    Text = config.Panel?.Text?.Text ?? "{0:hh:mm tt}"
                 }
             };
             config.PanelSettings = new PanelRegistration

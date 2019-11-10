@@ -32,7 +32,7 @@ Displays how many players a currently joining
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
       "Enabled": true,
-      "Color": "#FD5F00FF",
+      "Color": "#FFFFFFFF",
       "Order": 1,
       "Width": 0.67,
       "Padding": {

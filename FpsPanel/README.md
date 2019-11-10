@@ -33,7 +33,7 @@ Displays the current server fps
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
       "Enabled": true,
-      "Color": "#33B5E6FF",
+      "Color": "#FFFFFFFF",
       "Order": 1,
       "Width": 1.0,
       "Padding": {

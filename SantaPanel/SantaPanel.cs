@@ -1,34 +1,29 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Converters;
+using Oxide.Core;
 using Oxide.Core.Configuration;
 using Oxide.Core.Plugins;
-using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Hostile Panel", "MJSU", "0.0.8")]
-    [Description("Displays how much longer a player is considered hostile")]
-    internal class HostilePanel : RustPlugin
+    [Info("Santa Panel", "MJSU", "0.0.8")]
+    [Description("Displays if the santa event is active")]
+    internal class SantaPanel : RustPlugin
     {
         #region Class Fields
         [PluginReference] private readonly Plugin MagicPanel;
 
         private PluginConfig _pluginConfig; //Plugin Config
-        private string _panelText;
-        
-        private readonly Hash<ulong, Timer> _hostileTimer = new Hash<ulong, Timer>();
+        private List<SantaSleigh> _activeSleighs = new List<SantaSleigh>();
+        private bool _isSantaActive;
 
         private enum UpdateEnum { All = 1, Panel = 2, Image = 3, Text = 4 }
         #endregion
 
         #region Setup & Loading
-        private void Init()
-        {
-            _panelText = _pluginConfig.Panel.Text.Text;
-        }
-
         protected override void LoadDefaultConfig()
         {
             PrintWarning("Loading Default Config");
@@ -67,28 +62,17 @@ namespace Oxide.Plugins
                     Enabled = config.Panel?.Image?.Enabled ?? true,
                     Color = config.Panel?.Image?.Color ?? "#FFFFFFFF",
                     Order = config.Panel?.Image?.Order ?? 0,
-                    Width = config.Panel?.Image?.Width ?? 0.3f,
-                    Url = config.Panel?.Image?.Url ?? "https://i.imgur.com/v5sdNHg.png",
-                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.05f, 0.15f, 0.15f)
-                },
-                Text = new PanelText
-                {
-                    Enabled = config.Panel?.Text?.Enabled ?? true,
-                    Color = config.Panel?.Text?.Color ?? "#FFFFFFFF",  
-                    Order = config.Panel?.Text?.Order ?? 1,
-                    Width = config.Panel?.Text?.Width ?? 0.7f,
-                    FontSize = config.Panel?.Text?.FontSize ?? 14,
-                    Padding = config.Panel?.Text?.Padding ?? new TypePadding(0.05f, 0.05f, 0.05f, 0.05f),
-                    TextAnchor = config.Panel?.Text?.TextAnchor ?? TextAnchor.MiddleCenter,
-                    Text = config.Panel?.Text?.Text ?? "{0}m {1:00}s",
+                    Width = config.Panel?.Image?.Width ?? 1f,
+                    Url = config.Panel?.Image?.Url ?? "https://i.imgur.com/9wwPj3b.png",
+                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.05f, 0.07f, 0.07f)
                 }
             };
             config.PanelSettings = new PanelRegistration
             {
-                BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#fff2df08",
-                Dock = config.PanelSettings?.Dock ?? "centerupper",
-                Order = config.PanelSettings?.Order ?? 14,
-                Width = config.PanelSettings?.Width ?? 0.0725f
+                BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#FFF2DF08",
+                Dock = config.PanelSettings?.Dock ?? "center",
+                Order = config.PanelSettings?.Order ?? 11,
+                Width = config.PanelSettings?.Width ?? 0.02f
             };
             return config;
         }
@@ -96,6 +80,14 @@ namespace Oxide.Plugins
         private void OnServerInitialized()
         {
             RegisterPanels();
+
+            NextTick(() =>
+            {
+                _activeSleighs = UnityEngine.Object.FindObjectsOfType<SantaSleigh>().Where(CanShowPanel).ToList();
+                CheckSanta();
+            });
+
+            timer.Every(_pluginConfig.UpdateRate, CheckSanta);
         }
 
         private void RegisterPanels()
@@ -105,124 +97,84 @@ namespace Oxide.Plugins
                 PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
                 return;
             }
-        
-            MagicPanel?.Call("RegisterPlayerPanel", this, Name, JsonConvert.SerializeObject(_pluginConfig.PanelSettings), nameof(GetPanel));
-            timer.In(1f, () =>
-            {
-                foreach (BasePlayer player in BasePlayer.activePlayerList)
-                {
-                    SetupHostile(player);
-                }
-            });
+
+            MagicPanel?.Call("RegisterGlobalPanel", this, Name, JsonConvert.SerializeObject(_pluginConfig.PanelSettings), nameof(GetPanel));
         }
 
-        private void OnPlayerInit(BasePlayer player)
+        private void CheckSanta()
         {
-           HidePanel(player);
+            _activeSleighs.RemoveAll(p => !p.IsValid() || !p.gameObject.activeInHierarchy);
+
+            bool areSleighsActive = _activeSleighs.Count > 0;
+
+            if (areSleighsActive != _isSantaActive)
+            {
+                _isSantaActive = areSleighsActive;
+                MagicPanel?.Call("UpdatePanel", Name, (int)UpdateEnum.Image);
+            }
         }
         #endregion
 
         #region uMod Hooks
-        private void OnEntityMarkHostile(BasePlayer player)
+
+        private void OnEntitySpawned(SantaSleigh santa)
         {
-            if (player == null || player.IsNpc || !player.IsAdmin)
-            {
-                return;
-            }
-            
             NextTick(() =>
             {
-               SetupHostile(player);
-            });
-        }
-
-        private void SetupHostile(BasePlayer player)
-        {
-            if (player.unHostileTime < Time.realtimeSinceStartup)
-            {
-                HidePanel(player);
-                return;
-            }
-
-            ShowPanel(player);
-            UpdatePanel(player);
-            _hostileTimer[player.userID]?.Destroy();
-            _hostileTimer[player.userID] = timer.Every(_pluginConfig.UpdateRate, () =>
-            {
-                if (player.unHostileTime < Time.realtimeSinceStartup)
+                if (!CanShowPanel(santa))
                 {
-                    _hostileTimer[player.userID]?.Destroy();
-                    HidePanel(player);
                     return;
                 }
-                
-                UpdatePanel(player);
+
+                _activeSleighs.Add(santa);
+                CheckSanta();
             });
         }
         #endregion
 
         #region MagicPanel Hook
-        private Hash<string, object> GetPanel(BasePlayer player)
+        private Hash<string, object> GetPanel()
         {
             Panel panel = _pluginConfig.Panel;
-            PanelText text = panel.Text;
-            if (text != null)
+            PanelImage image = panel.Image;
+            if (image != null)
             {
-                int minutes = 0;
-                int seconds = 0;
-                if (player.unHostileTime > Time.realtimeSinceStartup)
-                {
-                    TimeSpan remainingTime = TimeSpan.FromSeconds(player.unHostileTime - Time.realtimeSinceStartup);
-                    minutes = remainingTime.Minutes;
-                    seconds = remainingTime.Seconds;
-                }
-                
-                text.Text = string.Format(_panelText, minutes, seconds);
+                image.Color = _isSantaActive ? _pluginConfig.ActiveColor : _pluginConfig.InactiveColor;
             }
 
             return panel.ToHash();
         }
         #endregion
-
-        #region Helper Methods
-
-        private void HidePanel(BasePlayer player)
-        {
-            if (!_pluginConfig.ShowHide)
-            {
-                return;
-            }
-            
-            MagicPanel?.Call("HidePanel", Name, player);
-        }
         
-        private void ShowPanel(BasePlayer player)
+        #region Helper Methods
+        private bool CanShowPanel(SantaSleigh santa)
         {
-            if (!_pluginConfig.ShowHide)
+            object result = Interface.Call("MagicPanelCanShow", Name, santa);
+            if (result is bool)
             {
-                return;
+                return (bool) result;
             }
-            
-            MagicPanel?.Call("ShowPanel", Name, player);
-        }
 
-        private void UpdatePanel(BasePlayer player)
-        {
-            MagicPanel?.Call("UpdatePanel", player, Name, (int)UpdateEnum.Text);
+            return true;
         }
         #endregion
 
         #region Classes
+
         private class PluginConfig
         {
-            [DefaultValue(false)]
-            [JsonProperty(PropertyName = "Show/Hide panel")]
-            public bool ShowHide { get; set; }
-            
-            [DefaultValue(false)]
+            [DefaultValue("#DC3545FF")]
+            [JsonProperty(PropertyName = "Active Color")]
+            public string ActiveColor { get; set; }
+
+            [DefaultValue("#FFFFFF1A")]
+            [JsonProperty(PropertyName = "Inactive Color")]
+            public string InactiveColor { get; set; }
+
+            [DefaultValue(5f)]
             [JsonProperty(PropertyName = "Update Rate (Seconds)")]
             public float UpdateRate { get; set; }
-            
+
             [JsonProperty(PropertyName = "Panel Settings")]
             public PanelRegistration PanelSettings { get; set; }
 
@@ -241,14 +193,12 @@ namespace Oxide.Plugins
         private class Panel
         {
             public PanelImage Image { get; set; }
-            public PanelText Text { get; set; }
             
             public Hash<string, object> ToHash()
             {
                 return new Hash<string, object>
                 {
                     [nameof(Image)] = Image.ToHash(),
-                    [nameof(Text)] = Text.ToHash()
                 };
             }
         }
@@ -282,24 +232,6 @@ namespace Oxide.Plugins
             {
                 Hash<string, object> hash = base.ToHash();
                 hash[nameof(Url)] = Url;
-                return hash;
-            }
-        }
-
-        private class PanelText : PanelType
-        {
-            public string Text { get; set; }
-            public int FontSize { get; set; }
-
-            [JsonConverter(typeof(StringEnumConverter))]
-            public TextAnchor TextAnchor { get; set; }
-            
-            public override Hash<string, object> ToHash()
-            {
-                Hash<string, object> hash = base.ToHash();
-                hash[nameof(Text)] = Text;
-                hash[nameof(FontSize)] = FontSize;
-                hash[nameof(TextAnchor)] = TextAnchor;
                 return hash;
             }
         }

@@ -1,10 +1,13 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using Newtonsoft.Json;
+using Oxide.Core.Configuration;
 using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("Images Panel", "MJSU", "0.0.6")]
+    [Info("Images Panel", "MJSU", "0.0.8")]
     [Description("Displays images in Magic Panel")]
     internal class ImagesPanel : RustPlugin
     {
@@ -25,10 +28,26 @@ namespace Oxide.Plugins
 
         protected override void LoadConfig()
         {
-            base.LoadConfig();
-            Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
-            _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
-            Config.WriteObject(_pluginConfig);
+            string path = $"{Manager.ConfigPath}/MagicPanel/{Name}.json";
+            DynamicConfigFile newConfig = new DynamicConfigFile(path);
+            if (!newConfig.Exists())
+            {
+                LoadDefaultConfig();
+                newConfig.Save();
+            }
+            try
+            {
+                newConfig.Load();
+            }
+            catch (Exception ex)
+            {
+                RaiseError("Failed to load config file (is the config file corrupt?) (" + ex.Message + ")");
+                return;
+            }
+            
+            newConfig.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
+            _pluginConfig = AdditionalConfig(newConfig.ReadObject<PluginConfig>());
+            newConfig.WriteObject(_pluginConfig);
         }
 
         private PluginConfig AdditionalConfig(PluginConfig config)
@@ -55,7 +74,8 @@ namespace Oxide.Plugins
                         Dock = "image",
                         Order = 0,
                         Width = 0.09f
-                    }
+                    },
+                    Enabled = true
                 },
                 [$"{Name}_2"] = new PanelData
                 {
@@ -77,7 +97,8 @@ namespace Oxide.Plugins
                         Dock = "image",
                         Order = 0,
                         Width = 0.09f
-                    }
+                    },
+                    Enabled = true
                 }
             };
             
@@ -99,6 +120,11 @@ namespace Oxide.Plugins
         
             foreach (KeyValuePair<string,PanelData> panel in _pluginConfig.Panels)
             {
+                if (!panel.Value.Enabled)
+                {
+                    continue;
+                }
+                
                 MagicPanel?.Call("RegisterGlobalPanel", this, panel.Key, JsonConvert.SerializeObject(panel.Value.PanelSettings), nameof(GetPanel));
             }
         }
@@ -128,6 +154,10 @@ namespace Oxide.Plugins
 
             [JsonProperty(PropertyName = "Panel Layout")]
             public Panel Panel { get; set; }
+            
+            [DefaultValue(true)]
+            [JsonProperty(PropertyName = "Enabled")]
+            public bool Enabled { get; set; }
         }
 
         private class PanelRegistration

@@ -1,13 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Oxide.Core.Configuration;
 using Oxide.Core.Plugins;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Death Notes Panel", "MJSU", "0.0.6")]
+    [Info("Death Notes Panel", "MJSU", "0.0.8")]
     [Description("Displays death notes in MagicPanel")]
     internal class DeathNotesPanel : RustPlugin
     {
@@ -36,10 +38,26 @@ namespace Oxide.Plugins
 
         protected override void LoadConfig()
         {
-            base.LoadConfig();
-            Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
-            _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
-            Config.WriteObject(_pluginConfig);
+            string path = $"{Manager.ConfigPath}/MagicPanel/{Name}.json";
+            DynamicConfigFile newConfig = new DynamicConfigFile(path);
+            if (!newConfig.Exists())
+            {
+                LoadDefaultConfig();
+                newConfig.Save();
+            }
+            try
+            {
+                newConfig.Load();
+            }
+            catch (Exception ex)
+            {
+                RaiseError("Failed to load config file (is the config file corrupt?) (" + ex.Message + ")");
+                return;
+            }
+            
+            newConfig.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
+            _pluginConfig = AdditionalConfig(newConfig.ReadObject<PluginConfig>());
+            newConfig.WriteObject(_pluginConfig);
         }
 
         private PluginConfig AdditionalConfig(PluginConfig config)
@@ -58,7 +76,7 @@ namespace Oxide.Plugins
                 Text = new PanelText
                 {
                     Enabled = config.Panel?.Text?.Enabled ?? true,
-                    Color = config.Panel?.Text?.Color ?? "#838383",
+                    Color = config.Panel?.Text?.Color ?? "#FFFFFFFF",  
                     Order = config.Panel?.Text?.Order ?? 1,
                     Width = config.Panel?.Text?.Width ?? 1f,
                     FontSize = config.Panel?.Text?.FontSize ?? 14,

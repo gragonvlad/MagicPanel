@@ -1,13 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Newtonsoft.Json;
 using Oxide.Core;
+using Oxide.Core.Configuration;
 using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("Ch47 Panel", "MJSU", "0.0.6")]
+    [Info("Ch47 Panel", "MJSU", "0.0.8")]
     [Description("Displays is the Ch47 event is active")]
     internal class Ch47Panel : RustPlugin
     {
@@ -29,10 +31,26 @@ namespace Oxide.Plugins
 
         protected override void LoadConfig()
         {
-            base.LoadConfig();
-            Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
-            _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
-            Config.WriteObject(_pluginConfig);
+            string path = $"{Manager.ConfigPath}/MagicPanel/{Name}.json";
+            DynamicConfigFile newConfig = new DynamicConfigFile(path);
+            if (!newConfig.Exists())
+            {
+                LoadDefaultConfig();
+                newConfig.Save();
+            }
+            try
+            {
+                newConfig.Load();
+            }
+            catch (Exception ex)
+            {
+                RaiseError("Failed to load config file (is the config file corrupt?) (" + ex.Message + ")");
+                return;
+            }
+            
+            newConfig.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
+            _pluginConfig = AdditionalConfig(newConfig.ReadObject<PluginConfig>());
+            newConfig.WriteObject(_pluginConfig);
         }
 
         private PluginConfig AdditionalConfig(PluginConfig config)

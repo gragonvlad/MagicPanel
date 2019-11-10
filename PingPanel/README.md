@@ -9,8 +9,8 @@ Displays the current ping for the player
 {
   "Update Rate (Seconds)": 5.0,
   "Panel Settings": {
-    "Dock": "lefttop",
-    "Width": 0.05,
+    "Dock": "leftmiddle",
+    "Width": 0.055,
     "Order": 5,
     "BackgroundColor": "#FFF2DF08"
   },
@@ -33,7 +33,7 @@ Displays the current ping for the player
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
       "Enabled": true,
-      "Color": "#32CD32FF",
+      "Color": "#FFFFFFFF",
       "Order": 1,
       "Width": 1.0,
       "Padding": {

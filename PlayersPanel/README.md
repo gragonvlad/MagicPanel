@@ -33,7 +33,7 @@ Displays the current player count
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
       "Enabled": true,
-      "Color": "#08C717FF",
+      "Color": "#FFFFFFFF",
       "Order": 1,
       "Width": 0.67,
       "Padding": {

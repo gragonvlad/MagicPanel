@@ -1,13 +1,15 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
 using Newtonsoft.Json;
 using Oxide.Core;
+using Oxide.Core.Configuration;
 using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("Cargo Ship Panel", "MJSU", "0.0.6")]
+    [Info("Cargo Ship Panel", "MJSU", "0.0.8")]
     [Description("Displays if the cargo ship event is active")]
     internal class CargoShipPanel : RustPlugin
     {
@@ -29,10 +31,26 @@ namespace Oxide.Plugins
 
         protected override void LoadConfig()
         {
-            base.LoadConfig();
-            Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
-            _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
-            Config.WriteObject(_pluginConfig);
+            string path = $"{Manager.ConfigPath}/MagicPanel/{Name}.json";
+            DynamicConfigFile newConfig = new DynamicConfigFile(path);
+            if (!newConfig.Exists())
+            {
+                LoadDefaultConfig();
+                newConfig.Save();
+            }
+            try
+            {
+                newConfig.Load();
+            }
+            catch (Exception ex)
+            {
+                RaiseError("Failed to load config file (is the config file corrupt?) (" + ex.Message + ")");
+                return;
+            }
+            
+            newConfig.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
+            _pluginConfig = AdditionalConfig(newConfig.ReadObject<PluginConfig>());
+            newConfig.WriteObject(_pluginConfig);
         }
 
         private PluginConfig AdditionalConfig(PluginConfig config)
@@ -46,7 +64,7 @@ namespace Oxide.Plugins
                     Order = config.Panel?.Image?.Order ?? 0,
                     Width = config.Panel?.Image?.Width ?? 1f,
                     Url = config.Panel?.Image?.Url ?? "https://i.imgur.com/LhZndt9.png",
-                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.05f, 0.1f, 0.1f)
+                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.05f, 0.0f, 0.0f)
                 }
             };
             config.PanelSettings = new PanelRegistration

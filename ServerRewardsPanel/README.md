@@ -7,7 +7,7 @@ Displays the players current server rewards balance
  
  ```json
 {
-  "Panel Update Rate": 5.0,
+  "Panel Update Rate (Seconds)": 5.0,
   "Panel Settings": {
     "Dock": "leftmiddle",
     "Width": 0.0625,
@@ -33,7 +33,7 @@ Displays the players current server rewards balance
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
       "Enabled": true,
-      "Color": "#85BB65FF",
+      "Color": "#FFFFFFFF",
       "Order": 1,
       "Width": 0.67,
       "Padding": {

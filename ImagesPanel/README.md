@@ -29,7 +29,8 @@ Displays images
             "Bottom": 0.05
           }
         }
-      }
+      },
+      "Enabled": true
     },
     "ImagesPanel_2": {
       "Panel Settings": {
@@ -52,7 +53,8 @@ Displays images
             "Bottom": 0.05
           }
         }
-      }
+      },
+      "Enabled": true
     }
   }
 }

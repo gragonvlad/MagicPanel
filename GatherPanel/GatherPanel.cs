@@ -2,23 +2,22 @@
 using System.ComponentModel;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Oxide.Core;
 using Oxide.Core.Configuration;
 using Oxide.Core.Plugins;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Hostile Panel", "MJSU", "0.0.8")]
-    [Description("Displays how much longer a player is considered hostile")]
-    internal class HostilePanel : RustPlugin
+    [Info("Gather Panel", "MJSU", "0.0.8")]
+    [Description("Displays gather rate in magic panel")]
+    internal class GatherPanel : RustPlugin
     {
         #region Class Fields
         [PluginReference] private readonly Plugin MagicPanel;
 
         private PluginConfig _pluginConfig; //Plugin Config
-        private string _panelText;
-        
-        private readonly Hash<ulong, Timer> _hostileTimer = new Hash<ulong, Timer>();
+        private string _gatherFormat;
 
         private enum UpdateEnum { All = 1, Panel = 2, Image = 3, Text = 4 }
         #endregion
@@ -26,7 +25,7 @@ namespace Oxide.Plugins
         #region Setup & Loading
         private void Init()
         {
-            _panelText = _pluginConfig.Panel.Text.Text;
+            _gatherFormat = _pluginConfig.Panel.Text.Text;
         }
 
         protected override void LoadDefaultConfig()
@@ -67,28 +66,28 @@ namespace Oxide.Plugins
                     Enabled = config.Panel?.Image?.Enabled ?? true,
                     Color = config.Panel?.Image?.Color ?? "#FFFFFFFF",
                     Order = config.Panel?.Image?.Order ?? 0,
-                    Width = config.Panel?.Image?.Width ?? 0.3f,
-                    Url = config.Panel?.Image?.Url ?? "https://i.imgur.com/v5sdNHg.png",
-                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.05f, 0.15f, 0.15f)
+                    Width = config.Panel?.Image?.Width ?? 0.33f,
+                    Url = config.Panel?.Image?.Url ?? "https://i.imgur.com/gV9P0cK.png",
+                    Padding = config.Panel?.Image?.Padding ?? new TypePadding(0.05f, 0.0f, 0.2f, 0.05f)
                 },
                 Text = new PanelText
                 {
                     Enabled = config.Panel?.Text?.Enabled ?? true,
                     Color = config.Panel?.Text?.Color ?? "#FFFFFFFF",  
                     Order = config.Panel?.Text?.Order ?? 1,
-                    Width = config.Panel?.Text?.Width ?? 0.7f,
+                    Width = config.Panel?.Text?.Width ?? 0.67f,
                     FontSize = config.Panel?.Text?.FontSize ?? 14,
                     Padding = config.Panel?.Text?.Padding ?? new TypePadding(0.05f, 0.05f, 0.05f, 0.05f),
                     TextAnchor = config.Panel?.Text?.TextAnchor ?? TextAnchor.MiddleCenter,
-                    Text = config.Panel?.Text?.Text ?? "{0}m {1:00}s",
+                    Text = config.Panel?.Text?.Text ?? "{0:0.00}x",
                 }
             };
             config.PanelSettings = new PanelRegistration
             {
-                BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#fff2df08",
-                Dock = config.PanelSettings?.Dock ?? "centerupper",
-                Order = config.PanelSettings?.Order ?? 14,
-                Width = config.PanelSettings?.Width ?? 0.0725f
+                BackgroundColor = config.PanelSettings?.BackgroundColor ?? "#FFF2DF08",
+                Dock = config.PanelSettings?.Dock ?? "lefttop",
+                Order = config.PanelSettings?.Order ?? 0,
+                Width = config.PanelSettings?.Width ?? 0.055f
             };
             return config;
         }
@@ -107,121 +106,61 @@ namespace Oxide.Plugins
             }
         
             MagicPanel?.Call("RegisterPlayerPanel", this, Name, JsonConvert.SerializeObject(_pluginConfig.PanelSettings), nameof(GetPanel));
-            timer.In(1f, () =>
-            {
-                foreach (BasePlayer player in BasePlayer.activePlayerList)
-                {
-                    SetupHostile(player);
-                }
-            });
-        }
-
-        private void OnPlayerInit(BasePlayer player)
-        {
-           HidePanel(player);
         }
         #endregion
 
-        #region uMod Hooks
-        private void OnEntityMarkHostile(BasePlayer player)
+        #region Gather Update Hook
+        private void OnGlobalGatherUpdated()
         {
-            if (player == null || player.IsNpc || !player.IsAdmin)
+            foreach (BasePlayer player in BasePlayer.activePlayerList)
             {
-                return;
+                MagicPanel?.Call("UpdatePanel", player, Name, (int)UpdateEnum.Text);
             }
-            
-            NextTick(() =>
-            {
-               SetupHostile(player);
-            });
         }
-
-        private void SetupHostile(BasePlayer player)
+        
+        private void OnPlayerGatherUpdated(BasePlayer player)
         {
-            if (player.unHostileTime < Time.realtimeSinceStartup)
-            {
-                HidePanel(player);
-                return;
-            }
-
-            ShowPanel(player);
-            UpdatePanel(player);
-            _hostileTimer[player.userID]?.Destroy();
-            _hostileTimer[player.userID] = timer.Every(_pluginConfig.UpdateRate, () =>
-            {
-                if (player.unHostileTime < Time.realtimeSinceStartup)
-                {
-                    _hostileTimer[player.userID]?.Destroy();
-                    HidePanel(player);
-                    return;
-                }
-                
-                UpdatePanel(player);
-            });
+            MagicPanel?.Call("UpdatePanel", player, Name, (int)UpdateEnum.Text);
         }
         #endregion
 
         #region MagicPanel Hook
+
         private Hash<string, object> GetPanel(BasePlayer player)
         {
             Panel panel = _pluginConfig.Panel;
             PanelText text = panel.Text;
             if (text != null)
             {
-                int minutes = 0;
-                int seconds = 0;
-                if (player.unHostileTime > Time.realtimeSinceStartup)
+                object globalGather = Interface.Call("GetGlobalGather");
+                if (globalGather is float)
                 {
-                    TimeSpan remainingTime = TimeSpan.FromSeconds(player.unHostileTime - Time.realtimeSinceStartup);
-                    minutes = remainingTime.Minutes;
-                    seconds = remainingTime.Seconds;
+                    text.Text = string.Format(_gatherFormat, (float)globalGather);
                 }
-                
-                text.Text = string.Format(_panelText, minutes, seconds);
+                else
+                {
+                    object playerGather = Interface.Call("GetGatherForPlayer", player);
+                    if (playerGather is float)
+                    {
+                        text.Text = string.Format(_gatherFormat, (float)playerGather);
+                    }
+                    else
+                    {
+                        text.Text = string.Format(_gatherFormat, _pluginConfig.DefaultGather);
+                    }
+                }
             }
 
             return panel.ToHash();
         }
         #endregion
 
-        #region Helper Methods
-
-        private void HidePanel(BasePlayer player)
-        {
-            if (!_pluginConfig.ShowHide)
-            {
-                return;
-            }
-            
-            MagicPanel?.Call("HidePanel", Name, player);
-        }
-        
-        private void ShowPanel(BasePlayer player)
-        {
-            if (!_pluginConfig.ShowHide)
-            {
-                return;
-            }
-            
-            MagicPanel?.Call("ShowPanel", Name, player);
-        }
-
-        private void UpdatePanel(BasePlayer player)
-        {
-            MagicPanel?.Call("UpdatePanel", player, Name, (int)UpdateEnum.Text);
-        }
-        #endregion
-
         #region Classes
         private class PluginConfig
         {
-            [DefaultValue(false)]
-            [JsonProperty(PropertyName = "Show/Hide panel")]
-            public bool ShowHide { get; set; }
-            
-            [DefaultValue(false)]
-            [JsonProperty(PropertyName = "Update Rate (Seconds)")]
-            public float UpdateRate { get; set; }
+            [DefaultValue(1f)]
+            [JsonProperty(PropertyName = "Default Gather")]
+            public float DefaultGather { get; set; }
             
             [JsonProperty(PropertyName = "Panel Settings")]
             public PanelRegistration PanelSettings { get; set; }
@@ -259,7 +198,7 @@ namespace Oxide.Plugins
             public string Color { get; set; }
             public int Order { get; set; }
             public float Width { get; set; }
-            public TypePadding Padding { get; set; }
+            public TypePadding Padding { get; set; } 
             
             public virtual Hash<string, object> ToHash()
             {

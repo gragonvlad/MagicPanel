@@ -32,7 +32,7 @@ Displays the current in game time
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
       "Enabled": true,
-      "Color": "#FF804FFF",
+      "Color": "#FFFFFFFF",
       "Order": 1,
       "Width": 0.72,
       "Padding": {

@@ -1,13 +1,16 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
+using Oxide.Core.Configuration;
 using Oxide.Core.Plugins;
 using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Message Panel", "MJSU", "0.0.6")]
+    [Info("Message Panel", "MJSU", "0.0.8")]
     [Description("Displays messages to the player")]
     internal class MessagePanel : RustPlugin
     {
@@ -27,10 +30,26 @@ namespace Oxide.Plugins
 
         protected override void LoadConfig()
         {
-            base.LoadConfig();
-            Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
-            _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
-            Config.WriteObject(_pluginConfig);
+            string path = $"{Manager.ConfigPath}/MagicPanel/{Name}.json";
+            DynamicConfigFile newConfig = new DynamicConfigFile(path);
+            if (!newConfig.Exists())
+            {
+                LoadDefaultConfig();
+                newConfig.Save();
+            }
+            try
+            {
+                newConfig.Load();
+            }
+            catch (Exception ex)
+            {
+                RaiseError("Failed to load config file (is the config file corrupt?) (" + ex.Message + ")");
+                return;
+            }
+            
+            newConfig.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
+            _pluginConfig = AdditionalConfig(newConfig.ReadObject<PluginConfig>());
+            newConfig.WriteObject(_pluginConfig);
         }
 
         private PluginConfig AdditionalConfig(PluginConfig config)
@@ -66,7 +85,8 @@ namespace Oxide.Plugins
                         "Message 2",
                         "<color=#FF0000>This message is red</color>"
                     },
-                    UpdateRate = 15f
+                    UpdateRate = 15f,
+                    Enabled = true
                 }
             };
             
@@ -77,7 +97,7 @@ namespace Oxide.Plugins
         {
             RegisterPanels();
 
-            foreach (IGrouping<float, KeyValuePair<string, PanelData>> panelUpdates in _pluginConfig.Panels.GroupBy(p => p.Value.UpdateRate))
+            foreach (IGrouping<float, KeyValuePair<string, PanelData>> panelUpdates in _pluginConfig.Panels.Where(p => p.Value.Enabled).GroupBy(p => p.Value.UpdateRate))
             {
                 timer.Every(panelUpdates.Key, () =>
                 {
@@ -99,6 +119,11 @@ namespace Oxide.Plugins
         
             foreach (KeyValuePair<string, PanelData> panel in _pluginConfig.Panels)
             {
+                if (!panel.Value.Enabled)
+                {
+                    continue;
+                }
+                
                 MagicPanel?.Call("RegisterGlobalPanel", this, panel.Key, JsonConvert.SerializeObject(panel.Value.PanelSettings), nameof(GetPanel));
             }
         }
@@ -148,8 +173,13 @@ namespace Oxide.Plugins
             
             [JsonProperty(PropertyName = "Messages")]
             public List<string> Messages { get; set; }
+            
             [JsonProperty(PropertyName = "Update Rate (Seconds)")]
             public float UpdateRate { get; set; }
+            
+            [DefaultValue(true)]
+            [JsonProperty(PropertyName = "Enabled")]
+            public bool Enabled { get; set; }
         }
 
         private class PanelRegistration

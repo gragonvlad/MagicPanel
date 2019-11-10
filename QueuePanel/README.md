@@ -32,7 +32,7 @@ Displays the current queue count
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
       "Enabled": true,
-      "Color": "#FA8072FF",
+      "Color": "#FFFFFFFF",
       "Order": 1,
       "Width": 0.6,
       "Padding": {

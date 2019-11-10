@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Oxide.Core;
+using Oxide.Core.Configuration;
 using Oxide.Core.Plugins;
 using Oxide.Game.Rust.Cui;
 using UnityEngine;
@@ -66,10 +68,26 @@ namespace Oxide.Plugins
 
         protected override void LoadConfig()
         {
-            base.LoadConfig();
-            Config.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
-            _pluginConfig = AdditionalConfig(Config.ReadObject<PluginConfig>());
-            Config.WriteObject(_pluginConfig);
+            string path = $"{Manager.ConfigPath}/MagicPanel/{Name}.json";
+            DynamicConfigFile newConfig = new DynamicConfigFile(path);
+            if (!newConfig.Exists())
+            {
+                LoadDefaultConfig();
+                newConfig.Save();
+            }
+            try
+            {
+                newConfig.Load();
+            }
+            catch (Exception ex)
+            {
+                RaiseError("Failed to load config file (is the config file corrupt?) (" + ex.Message + ")");
+                return;
+            }
+            
+            newConfig.Settings.DefaultValueHandling = DefaultValueHandling.Populate;
+            _pluginConfig = AdditionalConfig(newConfig.ReadObject<PluginConfig>());
+            newConfig.WriteObject(_pluginConfig);
         }
 
         private PluginConfig AdditionalConfig(PluginConfig config)
@@ -702,7 +720,7 @@ namespace Oxide.Plugins
         #region Image Library
         private bool IsReady()
         {
-            return ImageLibrary.Call<bool>("IsReady");
+            return ImageLibrary?.Call<bool>("IsReady") ?? false;
         }
         
         private void AddImage(string image)
@@ -772,11 +790,11 @@ namespace Oxide.Plugins
             return $"{UiPanelName}_dock_{dockName}";
         }
 
-        private UiPosition GetTypePosition(float startPos, float widthPercentage, TypePadding padding)
+        private UiPosition GetTypePosition(float startPos, float width, TypePadding padding)
         {
             UiPosition pos = new UiPosition(startPos + padding.Left,
                 padding.Bottom,
-                widthPercentage * (1 - (padding.Left + padding.Right)),
+                width * (1 - (padding.Left + padding.Right)),
                 1 - (padding.Top + padding.Bottom));
             return pos;
         }

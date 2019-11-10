@@ -11,7 +11,7 @@ Change the color of the Plane Crash icon when a Plane Crash is active.
   "Inactive Color": "#FFFFFF1A",
   "Update Rate (Seconds)": 5.0,
   "Panel Settings": {
-    "Dock": "right",
+    "Dock": "center",
     "Width": 0.02,
     "Order": 1,
     "BackgroundColor": "#FFF2DF08"

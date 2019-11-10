@@ -33,7 +33,7 @@ Displays the players current x y z position
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
       "Enabled": true,
-      "Color": "#FF6600FF",
+      "Color": "#FFFFFFFF",
       "Order": 1,
       "Width": 0.8,
       "Padding": {

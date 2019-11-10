@@ -11,7 +11,7 @@ Change the color of the Cargo Ship icon when the Cargo Ship is active
   "Inactive Color": "#FFFFFF1A",
   "Update Rate (Seconds)": 5.0,
   "Panel Settings": {
-    "Dock": "right",
+    "Dock": "center",
     "Width": 0.02,
     "Order": 5,
     "BackgroundColor": "#FFF2DF08"
@@ -26,8 +26,8 @@ Change the color of the Cargo Ship icon when the Cargo Ship is active
       "Padding": {
         "Left": 0.05,
         "Right": 0.05,
-        "Top": 0.1,
-        "Bottom": 0.1
+        "Top": 0.0,
+        "Bottom": 0.0
       }
     }
   }
