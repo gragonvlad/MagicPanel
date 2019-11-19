@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Wipe Panel", "MJSU", "0.0.8")]
+    [Info("Wipe Panel", "MJSU", "1.0.0")]
     [Description("Displays days to wipe in magic panel")]
     internal class WipePanel : RustPlugin
     {
@@ -106,13 +106,13 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
             
             if (WipeInfoApi == null)
             {
-                PrintError("Missing plugin dependency WipeInfoApi: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency WipeInfoApi: https://umod.org/plugins/wipe-info-api");
                 return;
             }
             
@@ -124,7 +124,7 @@ namespace Oxide.Plugins
             timer.In(1f, () =>
             {
                 _daysTillWipe = WipeInfoApi.Call<int>("GetDaysTillWipe");
-                MagicPanel?.Call("UpdatePanel", Name, UpdateEnum.Text);
+                MagicPanel.Call("UpdatePanel", Name, UpdateEnum.Text);
                 RegisterPanels();
             });
         }
@@ -133,7 +133,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
 

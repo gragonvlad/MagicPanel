@@ -7,7 +7,7 @@ using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("Rain Of Fire Panel", "MJSU", "0.0.8")]
+    [Info("Rain Of Fire Panel", "MJSU", "1.0.0")]
     [Description("Displays if the rain of fire event is active")]
     internal class RainOfFirePanel : RustPlugin
     {
@@ -84,7 +84,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
         
@@ -133,6 +133,11 @@ namespace Oxide.Plugins
 
         private bool CanShowPanel(TimedExplosive explosive)
         {
+            if (!(explosive?.IsValid() ?? false))
+            {
+                return false;
+            }
+            
             ServerProjectile proj = explosive.GetComponent<ServerProjectile>();
             if (proj == null)
             {

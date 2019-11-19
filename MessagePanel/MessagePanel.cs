@@ -10,7 +10,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Message Panel", "MJSU", "0.0.8")]
+    [Info("Message Panel", "MJSU", "1.0.0")]
     [Description("Displays messages to the player")]
     internal class MessagePanel : RustPlugin
     {
@@ -113,7 +113,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
         

@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Radiation Info Panel", "MJSU", "0.0.8")]
+    [Info("Radiation Info Panel", "MJSU", "1.0.0")]
     [Description("Displays how much radiation protection the player has verse how much they need")]
     internal class RadiationInfoPanel : RustPlugin
     {
@@ -108,7 +108,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
         

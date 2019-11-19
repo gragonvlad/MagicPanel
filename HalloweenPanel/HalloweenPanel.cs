@@ -8,7 +8,7 @@ using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("Halloween Panel", "MJSU", "0.0.8")]
+    [Info("Halloween Panel", "MJSU", "1.0.0")]
     [Description("Displays if the halloween event is active")]
     internal class HalloweenPanel : RustPlugin
     {
@@ -94,7 +94,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
 

@@ -9,7 +9,7 @@ using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("Ch47 Panel", "MJSU", "0.0.8")]
+    [Info("Ch47 Panel", "MJSU", "1.0.0")]
     [Description("Displays is the Ch47 event is active")]
     internal class Ch47Panel : RustPlugin
     {
@@ -94,7 +94,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
         

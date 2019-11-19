@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Server Rewards Panel", "MJSU", "0.0.8")]
+    [Info("Server Rewards Panel", "MJSU", "1.0.0")]
     [Description("Displays player server rewards data in MagicPanel")]
     internal class ServerRewardsPanel : RustPlugin
     {
@@ -108,7 +108,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
         

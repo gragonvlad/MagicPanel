@@ -9,7 +9,7 @@ using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("Air Strike Panel", "MJSU", "0.0.8")]
+    [Info("Air Strike Panel", "MJSU", "1.0.0")]
     [Description("Displays if the air strike event is active")]
     internal class AirStrikePanel : RustPlugin
     {
@@ -94,7 +94,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
         

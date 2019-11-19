@@ -11,7 +11,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Heli Panel", "MJSU", "0.0.8")]
+    [Info("Heli Panel", "MJSU", "1.0.0")]
     [Description("Displays if the helicopter event is active")]
     internal class HeliPanel : RustPlugin
     {
@@ -96,7 +96,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
         

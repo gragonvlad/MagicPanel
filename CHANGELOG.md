@@ -1,3 +1,9 @@
+## Version 1.0.0 (Release Version)
+HostilePanel -> Fixed default update rate  
+MagicPanel -> Performance Improvements  
+RainOfFirePanel -> Entity Valid checks  
+WipeInfoApi -> Fixed missing hook call. OnSaveVersionChanged moved to Loaded.  
+
 ## Version 0.0.8
 
 # NOTE:

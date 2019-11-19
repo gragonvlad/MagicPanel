@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Hostile Panel", "MJSU", "0.0.8")]
+    [Info("Hostile Panel", "MJSU", "1.0.0")]
     [Description("Displays how much longer a player is considered hostile")]
     internal class HostilePanel : RustPlugin
     {
@@ -102,7 +102,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
         
@@ -219,7 +219,7 @@ namespace Oxide.Plugins
             [JsonProperty(PropertyName = "Show/Hide panel")]
             public bool ShowHide { get; set; }
             
-            [DefaultValue(false)]
+            [DefaultValue(1.0f)]
             [JsonProperty(PropertyName = "Update Rate (Seconds)")]
             public float UpdateRate { get; set; }
             

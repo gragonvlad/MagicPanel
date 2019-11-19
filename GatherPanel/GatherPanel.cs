@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Gather Panel", "MJSU", "0.0.8")]
+    [Info("Gather Panel", "MJSU", "1.0.0")]
     [Description("Displays gather rate in magic panel")]
     internal class GatherPanel : RustPlugin
     {
@@ -101,7 +101,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
         

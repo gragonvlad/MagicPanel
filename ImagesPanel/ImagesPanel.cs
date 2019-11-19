@@ -7,7 +7,7 @@ using Oxide.Core.Plugins;
 
 namespace Oxide.Plugins
 {
-    [Info("Images Panel", "MJSU", "0.0.8")]
+    [Info("Images Panel", "MJSU", "1.0.0")]
     [Description("Displays images in Magic Panel")]
     internal class ImagesPanel : RustPlugin
     {
@@ -114,7 +114,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
         

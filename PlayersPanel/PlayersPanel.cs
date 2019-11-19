@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Players Panel", "MJSU", "0.0.8")]
+    [Info("Players Panel", "MJSU", "1.0.0")]
     [Description("Displays connected players in magic panel")]
     internal class PlayersPanel : RustPlugin
     {
@@ -101,7 +101,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
         

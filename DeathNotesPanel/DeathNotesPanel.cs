@@ -9,7 +9,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Death Notes Panel", "MJSU", "0.0.8")]
+    [Info("Death Notes Panel", "MJSU", "1.0.0")]
     [Description("Displays death notes in MagicPanel")]
     internal class DeathNotesPanel : RustPlugin
     {
@@ -104,7 +104,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
         

@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Magic Panel", "MJSU", "0.0.6")]
+    [Info("Magic Panel", "MJSU", "1.0.0")]
     [Description("Displays information to the players on their hud.")]
     internal class MagicPanel : RustPlugin
     {
@@ -240,6 +240,12 @@ namespace Oxide.Plugins
         #region Chat Commands
         private void MagicPanelChatCommand(BasePlayer player, string cmd, string[] args)
         {
+            if (args.Length == 0)
+            {
+                DisplayHelp(player);
+                return;
+            }
+            
             PlayerSettings settings = _storedData.Settings[player.userID];
             if (settings == null)
             {
@@ -248,12 +254,6 @@ namespace Oxide.Plugins
                     Enabled = true
                 };
                 _storedData.Settings[player.userID] = settings;
-            }
-
-            if (args.Length == 0)
-            {
-                DisplayHelp(player);
-                return;
             }
 
             switch (args[0].ToLower())
@@ -338,6 +338,7 @@ namespace Oxide.Plugins
             panel.PanelType = type;
             panel.GetPanelMethod = getMethodName;
             panel.Name = name;
+            panel.BackgroundColor = Ui.Color(panel.BackgroundColor);
             
             if (string.IsNullOrEmpty(panel.Name))
             {
@@ -561,7 +562,6 @@ namespace Oxide.Plugins
             players = players
                 .Where(p => _storedData.Settings[p.userID]?.Enabled ?? true)
                 .ToList();
-            
             if (players.Count == 0)
             {
                 return;
@@ -570,7 +570,7 @@ namespace Oxide.Plugins
             PanelSetup setup = new PanelSetup
             {
                 Pos = _pluginConfig.Docks[registeredPanel.Dock].Position,
-                PanelColor = Ui.Color(registeredPanel.BackgroundColor),
+                PanelColor = registeredPanel.BackgroundColor,
                 StartPos = _panelPositions[registeredPanel.Dock][registeredPanel.Name],
                 UiParentPanel = GetPanelUiName(registeredPanel.Name),
                 PanelReg = registeredPanel,
@@ -589,8 +589,13 @@ namespace Oxide.Plugins
         private void DrawGlobalPanel(List<BasePlayer> players, PanelSetup setup, UpdateEnum updateEnum)
         {
             PanelRegistration reg = setup.PanelReg;
+            HiddenPanelInfo info = _hiddenPanels[reg.Name];
+            if (info.All)
+            {
+                return;
+            }
             
-            Hash<string, object> panelData = reg.Plugin.Call<Hash<string, object>>(reg.GetPanelMethod, reg.Name);
+            Hash<string, object> panelData = reg.Plugin.Call(reg.GetPanelMethod, reg.Name) as Hash<string, object>;
             if (panelData == null)
             {
                 PrintError($"DrawGlobalPanel: {reg.Plugin.Name} returned no data from {reg.GetPanelMethod} method");
@@ -599,15 +604,15 @@ namespace Oxide.Plugins
             
             Panel panel = new Panel(panelData);
             List<PanelUpdate> containers = CreatePanel(panel, setup, updateEnum);
-            HiddenPanelInfo info = _hiddenPanels[setup.PanelReg.Name];
-            foreach (BasePlayer player in players)
+            foreach (PanelUpdate update in containers)
             {
-                foreach (PanelUpdate update in containers)
+                string json = CuiHelper.ToJson(update.Container);
+                foreach (BasePlayer player in players)
                 {
                     CuiHelper.DestroyUi(player, update.PanelName);
-                    if (!info.All && !info.PlayerHidden.Contains(player.userID))
+                    if (!info.PlayerHidden.Contains(player.userID))
                     {
-                        CuiHelper.AddUi(player, update.Container);
+                        CuiHelper.AddUi(player, json);
                     }
                 }
             }
@@ -615,23 +620,27 @@ namespace Oxide.Plugins
 
         private void DrawPlayersPanel(List<BasePlayer> players, PanelSetup setup, UpdateEnum updateEnum)
         {
+            HiddenPanelInfo info = _hiddenPanels[setup.PanelReg.Name];
+            if (info.All)
+            {
+                return;
+            }
+            
             foreach (BasePlayer player in players)
             {
                 PanelRegistration reg = setup.PanelReg;
-                Hash<string, object> panelData = reg.Plugin.Call<Hash<string, object>>(reg.GetPanelMethod, player, reg.Name);
+                Hash<string, object> panelData = reg.Plugin.Call(reg.GetPanelMethod, player, reg.Name) as Hash<string, object>;
                 if (panelData == null)
                 {
                     PrintError($"DrawPlayersPanel: {reg.Plugin.Name} returned no data from {reg.GetPanelMethod} method");
                     return;
                 }
-
+                
                 Panel panel = new Panel(panelData);
-                HiddenPanelInfo info = _hiddenPanels[setup.PanelReg.Name];
                 foreach (PanelUpdate update in CreatePanel(panel, setup, updateEnum))
                 {
                     CuiHelper.DestroyUi(player, update.PanelName);
-                    
-                    if (!info.All && !info.PlayerHidden.Contains(player.userID))
+                    if (!info.PlayerHidden.Contains(player.userID))
                     {
                         CuiHelper.AddUi(player, update.Container);
                     }
@@ -829,8 +838,19 @@ namespace Oxide.Plugins
         private void SaveData() => Interface.Oxide.DataFileSystem.WriteObject(Name, _storedData);
 
         private void Chat(BasePlayer player, string format, params object[] args) => PrintToChat(player, Lang(LangKeys.Chat, player, format), args);
-        
-        private string Lang(string key, BasePlayer player = null, params object[] args) => string.Format(lang.GetMessage(key, this, player?.UserIDString), args);
+
+        private string Lang(string key, BasePlayer player = null, params object[] args)
+        {
+            try
+            {
+                return string.Format(lang.GetMessage(key, this, player?.UserIDString), args);
+            }
+            catch(Exception ex)
+            {
+                PrintError($"Lang Key '{key}' threw exception\n:{ex}");
+                throw;
+            }
+        }
         #endregion
 
         #region Classes

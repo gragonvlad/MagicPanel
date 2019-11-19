@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Fps Panel", "MJSU", "0.0.8")]
+    [Info("Fps Panel", "MJSU", "1.0.0")]
     [Description("Displays the server fps in magic panel")]
     internal class FpsPanel : RustPlugin
     {
@@ -105,7 +105,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
         

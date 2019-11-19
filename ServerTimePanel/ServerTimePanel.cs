@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Clock Panel", "MJSU", "0.0.8")]
+    [Info("Clock Panel", "MJSU", "1.0.0")]
     [Description("Displays the servers local time in magic panel")]
     internal class ServerTimePanel : RustPlugin
     {
@@ -103,7 +103,7 @@ namespace Oxide.Plugins
         {
             if (MagicPanel == null)
             {
-                PrintError("Missing plugin dependency MagicPanel: https://github.com/dassjosh/MagicPanel");
+                PrintError("Missing plugin dependency MagicPanel: https://umod.org/plugins/magic-panel");
                 return;
             }
         
