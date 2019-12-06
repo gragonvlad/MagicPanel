@@ -1,8 +1,5 @@
 # Magic Panel
 
-## Testing
-This repository is for testing Magic Panel and the associated panels before going live on uMod.
-
 ## About
 Magic Panel is a 100% API driven panel display plugin for rust. 
 Each panel is a separate plugin that will register how that panel will function.

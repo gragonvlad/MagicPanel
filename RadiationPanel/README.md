@@ -1,4 +1,4 @@
-# Heli Panel
+# Radiation Panel
 
 ## About
 Change the color of the Radiation Icon when a player is in a radiation zone

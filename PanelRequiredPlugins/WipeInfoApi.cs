@@ -8,7 +8,7 @@ using Rust;
 
 namespace Oxide.Plugins
 {
-    [Info("Wipe Info Api", "MJSU", "1.0.0")]
+    [Info("Wipe Info Api", "MJSU", "1.0.1")]
     [Description("Api for when the server is wiping")]
     internal class WipeInfoApi : RustPlugin
     {
@@ -106,10 +106,7 @@ namespace Oxide.Plugins
                 lastForcedWipe = GetForcedWipe(_storedData.PreviousWipe.AddMonths(-1));
             }
 
-            if (nextForcedWipe.Date == DateTime.Now.Date && !_newSaveVersion)
-            {
-                _isForcedWipeDay = true;
-            }
+            _isForcedWipeDay = nextForcedWipe.Date == DateTime.Now.Date && !_newSaveVersion;
 
             _daysBetweenWipes = (int) (nextForcedWipe - lastForcedWipe).TotalDays;
             List<DateTime> wipes = new List<DateTime>();
@@ -140,7 +137,7 @@ namespace Oxide.Plugins
             _nextWipe = wipes.OrderBy(w => w).FirstOrDefault(w => w > _storedData.PreviousWipe);
             _daysTillNextWipe = (_nextWipe - DateTime.Today).Days;
             Puts($"Next Wipe: {_nextWipe} Days Until: {_daysTillNextWipe}");
-            Interface.Call("OnWipeCalculated");
+            Interface.Call("OnWipeCalculated", _nextWipe, _daysTillNextWipe);
         }
 
         private DateTime GetForcedWipe(DateTime date)

@@ -1,22 +1,20 @@
-# Players Panel
-
 ## About
-Displays the current player count
+Displays the players cash system currencies
 
 ## Configuration
- 
+ - Note: Plugin config is in the oxide/config/magicpanel folder
  ```json
 {
-  "Exclude Admins": false,
+  "Panel Update Rate (Seconds)": 5.0,
   "Panel Settings": {
-    "Dock": "lefttop",
-    "Width": 0.0525,
+    "Dock": "leftmiddle",
+    "Width": 0.0625,
     "Order": 1,
     "BackgroundColor": "#FFF2DF08"
   },
   "Panel Layout": {
     "Image": {
-      "Url": "https://i.imgur.com/TP01GYf.png",
+      "Url": "https://i.imgur.com/3HiDv4G.png",
       "Enabled": true,
       "Color": "#FFFFFFFF",
       "Order": 0,
@@ -24,12 +22,12 @@ Displays the current player count
       "Padding": {
         "Left": 0.05,
         "Right": 0.0,
-        "Top": 0.1,
-        "Bottom": 0.1
+        "Top": 0.2,
+        "Bottom": 0.05
       }
     },
     "Text": {
-      "Text": "{0}/{1}",
+      "Text": "{0:0.00}",
       "FontSize": 14,
       "TextAnchor": "MiddleCenter",
       "Enabled": true,
@@ -46,3 +44,6 @@ Displays the current player count
   }
 }
  ```
+
+### Configuration Options
+`Update Rate (Seconds)` How often the panel should update the players server rewards in seconds

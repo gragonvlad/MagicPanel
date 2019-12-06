@@ -1,7 +1,7 @@
-# Images Panel
+# Message Panel
 
 ## About
-Displays Messages
+Displays configured messages in magic panel
 
 ## Configuration
  
