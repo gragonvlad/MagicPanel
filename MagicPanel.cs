@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace Oxide.Plugins
 {
-    [Info("Magic Panel", "MJSU", "1.0.0")]
+    [Info("Magic Panel", "MJSU", "1.0.1")]
     [Description("Displays information to the players on their hud.")]
     internal class MagicPanel : RustPlugin
     {
@@ -216,7 +216,7 @@ namespace Oxide.Plugins
             
             NextTick(() =>
             {
-                Interface.Call("RegisterPanels");
+                Interface.Call("MagicPanelRegisterPanels");
                 _init = true;
 
                 DrawDock(BasePlayer.activePlayerList);
